@@ -1,0 +1,149 @@
+[
+  {
+    "id": 1,
+    "question": "Bu belgi nimani anglatadi? 🔴⚪ (Doira ichida oq chiziq)",
+    "options": [
+      "Kirish taqiqlangan",
+      "To'xtash taqiqlangan",
+      "Harakatlanish taqiqlangan",
+      "Orqaga qaytish taqiqlangan"
+    ],
+    "correct": 0,
+    "explanation": "Bu 'Kirish taqiqlangan' belgisi. Barcha transport vositalari uchun yo'lga kirishni man qiladi."
+  },
+  {
+    "id": 2,
+    "question": "Qizil svetofor yonayotganda haydovchi nima qilishi kerak?",
+    "options": [
+      "Ehtiyotkorlik bilan o'tish",
+      "To'xtash",
+      "Tezlikni oshirish",
+      "Signal berish"
+    ],
+    "correct": 1,
+    "explanation": "Qizil svetofor - to'liq to'xtash signali. Hech qanday holatda o'tib bo'lmaydi."
+  },
+  {
+    "id": 3,
+    "question": "Shahar ichida maksimal tezlik qancha?",
+    "options": [
+      "40 km/soat",
+      "60 km/soat",
+      "70 km/soat",
+      "80 km/soat"
+    ],
+    "correct": 2,
+    "explanation": "O'zbekistonda shahar ichida maksimal ruxsat etilgan tezlik 70 km/soat."
+  },
+  {
+    "id": 4,
+    "question": "Xavfsizlik kamarini qachon taqish shart?",
+    "options": [
+      "Faqat shahar tashqarisida",
+      "Faqat tezkor yo'llarda",
+      "Har doim",
+      "Faqat kechasi"
+    ],
+    "correct": 2,
+    "explanation": "Xavfsizlik kamarini haydovchi va barcha yo'lovchilar har doim taqishlari shart."
+  },
+  {
+    "id": 5,
+    "question": "Piyodalar o'tish joyida kimga ustunlik beriladi?",
+    "options": [
+      "Avtomobilga",
+      "Piyodaga",
+      "Kim oldin yetib kelsa",
+      "Katta avtomobilga"
+    ],
+    "correct": 1,
+    "explanation": "Belgilangan piyodalar o'tish joyida har doim piyodalarga ustunlik beriladi."
+  },
+  {
+    "id": 6,
+    "question": "Sariq svetofor nimani anglatadi?",
+    "options": [
+      "Tezroq harakatlanish",
+      "Ehtiyot bo'lish, to'xtashga tayyorlanish",
+      "O'tish mumkin",
+      "Orqaga qaytish"
+    ],
+    "correct": 1,
+    "explanation": "Sariq svetofor - qizil svetoforga tayyorgarlik signali. To'xtashga tayyorlanish kerak."
+  },
+  {
+    "id": 7,
+    "question": "Telefon bilan gaplashib haydash mumkinmi?",
+    "options": [
+      "Ha, har doim",
+      "Faqat hands-free qurilma bilan",
+      "Faqat yo'l bo'sh bo'lsa",
+      "Yo'q, hech qachon"
+    ],
+    "correct": 1,
+    "explanation": "Haydash paytida telefondan faqat hands-free qurilma orqali foydalanish mumkin."
+  },
+  {
+    "id": 8,
+    "question": "Yo'l chetida to'xtashda qanday masofa qoldirish kerak?",
+    "options": [
+      "Hech qanday masofa kerak emas",
+      "Kamida 3 metr",
+      "Kamida 5 metr",
+      "10 metr"
+    ],
+    "correct": 1,
+    "explanation": "Yo'l chetida to'xtashda boshqa transport vositalari o'tishi uchun kamida 3 metr joy qoldirish kerak."
+  },
+  {
+    "id": 9,
+    "question": "Mast holda mashina haydash uchun jazo nima?",
+    "options": [
+      "Ogohlantiruv",
+      "Jarima",
+      "Huquqdan mahrum qilish va jarima",
+      "Hech narsa"
+    ],
+    "correct": 2,
+    "explanation": "Mast holda haydash - eng og'ir qonun buzilishlardan biri. Huquqdan mahrum qilish va katta jarima."
+  },
+  {
+    "id": 10,
+    "question": "Avtomagistralda minimal tezlik qancha?",
+    "options": [
+      "40 km/soat",
+      "50 km/soat",
+      "60 km/soat",
+      "Minimal tezlik yo'q"
+    ],
+    "correct": 2,
+    "explanation": "Avtomagistralda minimal tezlik 60 km/soat. Sekinroq yursangiz boshqalarga xalaqit beradi."
+  },
+  {
+    "question": "Yengil avtomobilga qaysi yo‘nalishlarda harakatlanishga ruxsat etiladi?",
+    "options": [
+      "Faqat to'g'riga",
+      "Faqat o'ngga",
+      "Faqat o'ngga va chapga",
+      "Istalgan yo'nalishda"
+    ],
+    "explanation": "Tushuntirish",
+    "file_id": "AgACAgIAAxkBAAN0aV8u6EbAMduwZb9jYUch2nlnKmAAAgcNaxvPY6FK-7dVDCDqjXIBAAMCAAN5AAM4BA",
+    "correct": 3,
+    "id": 11
+  },
+  {
+    "question": "Ushbu svetafor qaysi yo’nalishida harakatlanishga ruxsat beradi?",
+    "options": [
+      "Faqat o'ngga",
+      "To'g'riga va o'ngga",
+      "To'g'riga va chapga",
+      "Faqat chapga"
+    ],
+    "explanation": "Tushuntirish",
+    "file_id": "AgACAgIAAxkBAAPiaV91owSCAj5lKTDmOSCAOzyg-O0AAgYNaxvPY6FKwuBx_m5b6OsBAAMCAAN5AAM4BA",
+    "category": "signs",
+    "correct": 1,
+    "id": 12
+  }
+]
