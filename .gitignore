@@ -1,4 +1,7 @@
 venv/
-pycache/
+__pycache__/
 *.pyc
 .env
+*.log
+.DS_Store
+questions_backup.json
