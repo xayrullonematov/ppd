@@ -56,7 +56,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Go back to home
         await query.answer()
         await query.message.reply_text(
-            "🏠 Bosh sahifa\\n\\n/test - Yangi test boshlash"
+            "🏠 Bosh sahifa\n\n/test - Yangi test boshlash"
         )
 
 def main():
