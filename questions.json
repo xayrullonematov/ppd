@@ -8,8 +8,9 @@
       "Harakatlanish taqiqlangan",
       "Orqaga qaytish taqiqlangan"
     ],
-    "correct": 0,
-    "explanation": "Bu 'Kirish taqiqlangan' belgisi. Barcha transport vositalari uchun yo'lga kirishni man qiladi."
+    "correct_index": 0,
+    "explanation": "Bu 'Kirish taqiqlangan' belgisi. Barcha transport vositalari uchun yo'lga kirishni man qiladi.",
+    "category": "signs"
   },
   {
     "id": 2,
@@ -20,8 +21,9 @@
       "Tezlikni oshirish",
       "Signal berish"
     ],
-    "correct": 1,
-    "explanation": "Qizil svetofor - to'liq to'xtash signali. Hech qanday holatda o'tib bo'lmaydi."
+    "correct_index": 1,
+    "explanation": "Qizil svetofor - to'liq to'xtash signali. Hech qanday holatda o'tib bo'lmaydi.",
+    "category": "rules"
   },
   {
     "id": 3,
@@ -32,8 +34,9 @@
       "70 km/soat",
       "80 km/soat"
     ],
-    "correct": 2,
-    "explanation": "O'zbekistonda shahar ichida maksimal ruxsat etilgan tezlik 70 km/soat."
+    "correct_index": 2,
+    "explanation": "O'zbekistonda shahar ichida maksimal ruxsat etilgan tezlik 70 km/soat.",
+    "category": "speed"
   },
   {
     "id": 4,
@@ -44,8 +47,9 @@
       "Har doim",
       "Faqat kechasi"
     ],
-    "correct": 2,
-    "explanation": "Xavfsizlik kamarini haydovchi va barcha yo'lovchilar har doim taqishlari shart."
+    "correct_index": 2,
+    "explanation": "Xavfsizlik kamarini haydovchi va barcha yo'lovchilar har doim taqishlari shart.",
+    "category": "rules"
   },
   {
     "id": 5,
@@ -56,8 +60,9 @@
       "Kim oldin yetib kelsa",
       "Katta avtomobilga"
     ],
-    "correct": 1,
-    "explanation": "Belgilangan piyodalar o'tish joyida har doim piyodalarga ustunlik beriladi."
+    "correct_index": 1,
+    "explanation": "Belgilangan piyodalar o'tish joyida har doim piyodalarga ustunlik beriladi.",
+    "category": "rules"
   },
   {
     "id": 6,
@@ -68,8 +73,9 @@
       "O'tish mumkin",
       "Orqaga qaytish"
     ],
-    "correct": 1,
-    "explanation": "Sariq svetofor - qizil svetoforga tayyorgarlik signali. To'xtashga tayyorlanish kerak."
+    "correct_index": 1,
+    "explanation": "Sariq svetofor - qizil svetoforga tayyorgarlik signali. To'xtashga tayyorlanish kerak.",
+    "category": "rules"
   },
   {
     "id": 7,
@@ -80,8 +86,9 @@
       "Faqat yo'l bo'sh bo'lsa",
       "Yo'q, hech qachon"
     ],
-    "correct": 1,
-    "explanation": "Haydash paytida telefondan faqat hands-free qurilma orqali foydalanish mumkin."
+    "correct_index": 1,
+    "explanation": "Haydash paytida telefondan faqat hands-free qurilma orqali foydalanish mumkin.",
+    "category": "rules"
   },
   {
     "id": 8,
@@ -92,8 +99,9 @@
       "Kamida 5 metr",
       "10 metr"
     ],
-    "correct": 1,
-    "explanation": "Yo'l chetida to'xtashda boshqa transport vositalari o'tishi uchun kamida 3 metr joy qoldirish kerak."
+    "correct_index": 1,
+    "explanation": "Yo'l chetida to'xtashda boshqa transport vositalari o'tishi uchun kamida 3 metr joy qoldirish kerak.",
+    "category": "rules"
   },
   {
     "id": 9,
@@ -104,8 +112,9 @@
       "Huquqdan mahrum qilish va jarima",
       "Hech narsa"
     ],
-    "correct": 2,
-    "explanation": "Mast holda haydash - eng og'ir qonun buzilishlardan biri. Huquqdan mahrum qilish va katta jarima."
+    "correct_index": 2,
+    "explanation": "Mast holda haydash - eng og'ir qonun buzilishlardan biri. Huquqdan mahrum qilish va katta jarima.",
+    "category": "speed"
   },
   {
     "id": 10,
@@ -116,34 +125,36 @@
       "60 km/soat",
       "Minimal tezlik yo'q"
     ],
-    "correct": 2,
-    "explanation": "Avtomagistralda minimal tezlik 60 km/soat. Sekinroq yursangiz boshqalarga xalaqit beradi."
+    "correct_index": 2,
+    "explanation": "Avtomagistralda minimal tezlik 60 km/soat. Sekinroq yursangiz boshqalarga xalaqit beradi.",
+    "category": "speed"
   },
   {
-    "question": "Yengil avtomobilga qaysi yo‘nalishlarda harakatlanishga ruxsat etiladi?",
+    "id": 11,
+    "question": "Yengil avtomobilga qaysi yo'nalishlarda harakatlanishga ruxsat etiladi?",
     "options": [
       "Faqat to'g'riga",
       "Faqat o'ngga",
       "Faqat o'ngga va chapga",
       "Istalgan yo'nalishda"
     ],
-    "explanation": "Tushuntirish",
-    "file_id": "AgACAgIAAxkBAAN0aV8u6EbAMduwZb9jYUch2nlnKmAAAgcNaxvPY6FK-7dVDCDqjXIBAAMCAAN5AAM4BA",
-    "correct": 3,
-    "id": 11
+    "correct_index": 3,
+    "explanation": "Rasmda ko'rsatilganidek, svetofor barcha yo'nalishlarga ruxsat bermoqda.",
+    "category": "signs",
+    "file_id": "AgACAgIAAxkBAAN0aV8u6EbAMduwZb9jYUch2nlnKmAAAgcNaxvPY6FK-7dVDCDqjXIBAAMCAAN5AAM4BA"
   },
   {
-    "question": "Ushbu svetafor qaysi yo’nalishida harakatlanishga ruxsat beradi?",
+    "id": 12,
+    "question": "Ushbu svetafor qaysi yo'nalishida harakatlanishga ruxsat beradi?",
     "options": [
       "Faqat o'ngga",
       "To'g'riga va o'ngga",
       "To'g'riga va chapga",
       "Faqat chapga"
     ],
-    "explanation": "Tushuntirish",
-    "file_id": "AgACAgIAAxkBAAPiaV91owSCAj5lKTDmOSCAOzyg-O0AAgYNaxvPY6FKwuBx_m5b6OsBAAMCAAN5AAM4BA",
+    "correct_index": 1,
+    "explanation": "Svetofor o'q ko'rinishida to'g'riga va o'ngga harakatlanishga ruxsat bermoqda.",
     "category": "signs",
-    "correct": 1,
-    "id": 12
+    "file_id": "AgACAgIAAxkBAAPiaV91owSCAj5lKTDmOSCAOzyg-O0AAgYNaxvPY6FKwuBx_m5b6OsBAAMCAAN5AAM4BA"
   }
 ]
