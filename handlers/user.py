@@ -17,19 +17,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = get_total_count()
     
     text = (
-        "🚗 Salom! PDD test botiga xush kelibsiz!\\n\\n"
-        f"📊 Bazada {total} ta savol:\\n"
+        "🚗 Salom! PDD test botiga xush kelibsiz!\n\n"
+        f"📊 Bazada {total} ta savol:\n"
     )
     
     for letter, cat_info in config.CATEGORIES.items():
         if cat_info['id'] != 'mixed':
             count = stats.get(cat_info['id'], 0)
-            text += f"{cat_info['emoji']} {cat_info['name']}: {count} ta\\n"
+            text += f"{cat_info['emoji']} {cat_info['name']}: {count} ta\n"
     
-    text += "\\n/test - Test boshlash"
+    text += "\n/test - Test boshlash"
     
     if is_admin:
-        text += "\\n\\n🔐 Admin: /admin"
+        text += "\n\n🔐 Admin: /admin"
     
     await update.message.reply_text(text)
 
