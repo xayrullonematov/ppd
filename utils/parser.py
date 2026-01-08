@@ -31,8 +31,8 @@ def parse_question_caption(caption: str) -> Tuple[Optional[Dict], Optional[str]]
             top_part = caption.strip()
             explanation = "Tushuntirish kiritilmagan."
         
-        lines = [line.strip() for line in top_part.split('\\n') if line.strip()]
-        option_pattern = re.compile(r'^[A-D]\\)')
+        lines = [line.strip() for line in top_part.split('\n') if line.strip()]
+        option_pattern = re.compile(r'^[A-D]\)')
         
         question_lines = []
         option_lines = []
@@ -53,7 +53,7 @@ def parse_question_caption(caption: str) -> Tuple[Optional[Dict], Optional[str]]
         # Remove A), B), C), D) prefixes
         options = []
         for line in option_lines:
-            option_text = re.sub(r'^[A-D]\\)\\s*', '', line).strip()
+            option_text = re.sub(r'^[A-D]\)\s*', '', line).strip()
             options.append(option_text)
         
         if not question:
