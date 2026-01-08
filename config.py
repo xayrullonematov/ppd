@@ -2,11 +2,17 @@
 Bot configuration
 """
 
-# Bot token from @BotFather
-TOKEN = "8534427551:AAF8F-AJzoo1pko77mMj2HN4AiaFjYEVsBw"
+import os
+from dotenv import load_dotenv
 
-# Admin Telegram user ID (get from @userinfobot)
-ADMIN_ID = 7038406097
+# Load environment variables from .env file
+load_dotenv()
+
+# Bot token from @BotFather - LOAD FROM ENVIRONMENT
+TOKEN = os.getenv("BOT_TOKEN", "")
+
+# Admin Telegram user ID (get from @userinfobot) - LOAD FROM ENVIRONMENT
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 # Category definitions
 CATEGORIES = {
@@ -42,3 +48,10 @@ def get_category_name(letter):
 def get_category_id(letter):
     """Get category ID from letter"""
     return CATEGORIES.get(letter, {}).get('id', 'mixed')
+
+# Validate configuration
+if not TOKEN:
+    raise ValueError("BOT_TOKEN not found in environment variables!")
+
+if ADMIN_ID == 0:
+    raise ValueError("ADMIN_ID not found in environment variables!")
