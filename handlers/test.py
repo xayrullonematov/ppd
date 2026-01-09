@@ -5,6 +5,7 @@ Test session management
 from telegram import Update
 from telegram.ext import ContextTypes
 from database import get_random_questions
+from user_stats import record_answer, record_test_completion, get_wrong_questions
 from utils.keyboards import get_answer_keyboard, get_result_keyboard
 import config
 
@@ -127,12 +128,20 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answ
         session = user_sessions[user_id]
         question = session['questions'][session['current']]
         
-        # Check if answer is correct (using shuffled index)
         if 'shuffled_correct_index' not in question:
-            await query.message.reply_text("❌ Savol noto'g'ri formatda. /test buyrug'i bilan qaytadan boshlang.")
+            await query.message.reply_text("❌ Savol noto'g'ri formatda.")
             return
             
         is_correct = (answer_index == question['shuffled_correct_index'])
+        
+        # 🆕 RECORD ANSWER
+        from user_stats import record_answer
+        record_answer(
+            user_id=user_id,
+            question_id=question['id'],
+            is_correct=is_correct,
+            category=question.get('category', 'mixed')
+        )
         
         if is_correct:
             session['correct'] += 1
@@ -145,12 +154,11 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answ
         
         await query.message.reply_text(result_text)
         
-        # Move to next question
         session['current'] += 1
         await send_question(update, context, user_id)
         
     except Exception as e:
-        await query.message.reply_text(f"❌ Xatolik: {str(e)}\n\n/test buyrug'i bilan qaytadan boshlang.")
+        await query.message.reply_text(f"❌ Xatolik: {str(e)}")
 
 async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     """Show test results"""
@@ -163,6 +171,15 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         correct = session['correct']
         total = len(session['questions'])
         percentage = (correct / total) * 100
+        
+        # 🆕 RECORD TEST COMPLETION
+        from user_stats import record_test_completion
+        record_test_completion(
+            user_id=user_id,
+            category=session['category'],
+            score=correct,
+            total=total
+        )
         
         cat_info = next(
             (cat for cat in config.CATEGORIES.values() if cat['id'] == session['category']),
@@ -191,12 +208,7 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         else:
             await update.message.reply_text(result_text, reply_markup=keyboard)
         
-        # Clean up session
         del user_sessions[user_id]
         
     except Exception as e:
-        error_msg = f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}"
-        if update.callback_query:
-            await update.callback_query.message.reply_text(error_msg)
-        else:
-            await update.message.reply_text(error_msg)
+        await query.message.reply_text(f"❌ Xatolik: {str(e)}")
