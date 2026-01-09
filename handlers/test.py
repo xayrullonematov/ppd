@@ -134,8 +134,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answ
             
         is_correct = (answer_index == question['shuffled_correct_index'])
         
-        # 🆕 RECORD ANSWER
-        from user_stats import record_answer
+        # Record answer to statistics
         record_answer(
             user_id=user_id,
             question_id=question['id'],
@@ -172,8 +171,7 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         total = len(session['questions'])
         percentage = (correct / total) * 100
         
-        # 🆕 RECORD TEST COMPLETION
-        from user_stats import record_test_completion
+        # Record test completion
         record_test_completion(
             user_id=user_id,
             category=session['category'],
@@ -211,4 +209,8 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         del user_sessions[user_id]
         
     except Exception as e:
-        await query.message.reply_text(f"❌ Xatolik: {str(e)}")
+        error_msg = f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}"
+        if update.callback_query:
+            await update.callback_query.message.reply_text(error_msg)
+        else:
+            await update.message.reply_text(error_msg)
