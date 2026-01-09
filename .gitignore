@@ -5,3 +5,4 @@ __pycache__/
 *.log
 .DS_Store
 questions_backup.json
+user_stats.json
