@@ -14,10 +14,11 @@ from telegram.ext import (
 )
 
 import config
+from handlers.user import start, test_command, stats_command, review_command
 from handlers.admin import admin_command, handle_admin_message
 from handlers.test import start_test, handle_answer
 from utils.keyboards import get_category_keyboard
-from handlers.user import start, test_command, stats_command, review_command
+
 # Setup logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -64,14 +65,16 @@ def main():
     # Create application
     application = Application.builder().token(config.TOKEN).build()
     
-    # Add handlers
+    # Add command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("test", test_command))
+    application.add_handler(CommandHandler("stats", stats_command))
+    application.add_handler(CommandHandler("review", review_command))
     application.add_handler(CommandHandler("admin", admin_command))
+    
+    # Add callback query handler
     application.add_handler(CallbackQueryHandler(handle_callback))
-
-    application.add_handler(CommandHandler("stats", stats_command))  # 🆕
-    application.add_handler(CommandHandler("review", review_command))  # 🆕  
+    
     # Admin message handler (for adding questions)
     application.add_handler(MessageHandler(
         (filters.PHOTO | filters.TEXT) & ~filters.COMMAND,
