@@ -1,5 +1,5 @@
 """
-PDD Test Bot - Main entry point with Admin Tools
+PDD Test Bot - Main entry point with Exam Mode
 """
 
 import logging
@@ -16,7 +16,7 @@ from telegram.ext import (
 import config
 from handlers.user import start, test_command, stats_command, review_command
 from handlers.admin import admin_command, handle_admin_message
-from handlers.test import start_test, handle_answer
+from handlers.test import start_test, handle_answer, user_sessions
 from handlers.admin_tools import (
     admin_tools_command,
     list_questions,
@@ -30,6 +30,14 @@ from handlers.admin_tools import (
     detailed_stats,
     export_questions,
     admin_state
+)
+from handlers.exam_mode import (
+    exam_command,
+    start_exam,
+    handle_exam_answer,
+    cancel_exam,
+    has_active_exam,
+    exam_sessions
 )
 from utils.keyboards import get_category_keyboard
 
@@ -46,8 +54,25 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Route callback queries to appropriate handlers"""
     query = update.callback_query
     data = query.data
+    user_id = update.effective_user.id
     
-    # Test-related callbacks
+    # Exam mode callbacks
+    if data == "exam_start":
+        await start_exam(update, context)
+        return
+    
+    elif data == "exam_cancel":
+        await cancel_exam(update, context)
+        return
+    
+    # Check if user is in exam mode - priority handling
+    if has_active_exam(user_id):
+        if data.startswith("answer_"):
+            answer_index = int(data.split("_")[1])
+            await handle_exam_answer(update, context, answer_index)
+            return
+    
+    # Regular test callbacks
     if data.startswith("start_"):
         category = data.replace("start_", "")
         await start_test(update, context, category)
@@ -67,7 +92,9 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "home":
         await query.answer()
         await query.message.reply_text(
-            "🏠 Bosh sahifa\n\n/test - Yangi test boshlash"
+            "🏠 Bosh sahifa\n\n"
+            "/test - Mashq test\n"
+            "/exam - Haqiqiy imtihon"
         )
     
     # Admin tools callbacks
@@ -162,6 +189,7 @@ def main():
     # Add command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("test", test_command))
+    application.add_handler(CommandHandler("exam", exam_command))  # NEW!
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("review", review_command))
     application.add_handler(CommandHandler("admin", admin_command))
@@ -186,6 +214,7 @@ def main():
     logger.info("✅ Bot ishga tushdi!")
     logger.info(f"📊 Admin ID: {config.ADMIN_ID}")
     logger.info("🔧 Admin tools yoqilgan!")
+    logger.info("🎓 Exam mode yoqilgan!")
     
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
