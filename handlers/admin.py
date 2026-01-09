@@ -2,7 +2,7 @@
 Admin commands for adding questions
 """
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import config
 from database import add_question, get_category_stats, get_total_count
@@ -28,7 +28,12 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if cat_info['id'] != 'mixed'
     ])
     
-    await update.message.reply_text(
+    # Add advanced tools button
+    keyboard = [
+        [InlineKeyboardButton("🔧 Admin asboblari", callback_data="admin_tools")]
+    ]
+    
+    message_text = (
         f"🔐 Admin panel\n\n"
         f"📊 Statistika:\n{stats_text}\n\n"
         f"Jami: {total}\n\n"
@@ -52,9 +57,23 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"a = 🚦 Belgilar\n"
         f"b = 🚗 Qoidalar\n"
         f"c = ⚡ Tezlik\n"
-        f"d = 🧠 Aralash",
-        parse_mode='Markdown'
+        f"d = 🧠 Aralash\n\n"
+        f"🔧 /tools - Tahrirlash, o'chirish, qidirish"
     )
+    
+    # Check if this is from callback or message
+    if hasattr(update, 'callback_query') and update.callback_query:
+        await update.callback_query.edit_message_text(
+            message_text,
+            parse_mode='Markdown',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    else:
+        await update.message.reply_text(
+            message_text,
+            parse_mode='Markdown',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle messages from admin"""
