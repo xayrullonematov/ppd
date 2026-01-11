@@ -63,11 +63,17 @@ async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Check if user already has active exam
     if user_id in exam_sessions and exam_sessions[user_id].is_active:
         remaining = exam_sessions[user_id].time_remaining_formatted()
-        await update.message.reply_text(
+        text = (
             f"⚠️ Sizda faol imtihon bor!\n\n"
             f"⏰ Qolgan vaqt: {remaining}\n\n"
             f"Davom etish uchun savolga javob bering."
         )
+        
+        # Check if called from callback or command
+        if update.callback_query:
+            await update.callback_query.edit_message_text(text)
+        else:
+            await update.message.reply_text(text)
         return
     
     # Show exam info and confirmation
@@ -76,7 +82,7 @@ async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("❌ Bekor qilish", callback_data="exam_cancel")]
     ]
     
-    await update.message.reply_text(
+    text = (
         "🎓 HAQIQIY IMTIHON SIMULYATSIYASI\n\n"
         f"📋 Savollar: {EXAM_QUESTIONS} ta\n"
         f"⏰ Vaqt: {EXAM_TIME_MINUTES} daqiqa\n"
@@ -85,9 +91,16 @@ async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Vaqt tugashi bilan test avtomatik topshiriladi\n"
         "• Orqaga qaytib javobni o'zgartira olmaysiz\n"
         "• Har bir savol faqat bir marta ko'rsatiladi\n\n"
-        "Tayyor bo'lsangiz boshlang!",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "Tayyor bo'lsangiz boshlang!"
     )
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Check if called from callback or command
+    if update.callback_query:
+        await update.callback_query.edit_message_text(text, reply_markup=reply_markup)
+    else:
+        await update.message.reply_text(text, reply_markup=reply_markup)
 
 async def start_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Initialize and start exam"""

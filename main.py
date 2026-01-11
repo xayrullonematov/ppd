@@ -83,7 +83,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Create fake update for start command
         class FakeMessage:
-            def init(self, original_message):
+            def __init__(self, original_message):
                 self.message_id = original_message.message_id
                 self.chat = original_message.chat
                 self.from_user = original_message.from_user
@@ -130,7 +130,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Create fake update for admin command
         class FakeMessage:
-            def init(self, original_message):
+            def __init__(self, original_message):
                 self.message_id = original_message.message_id
                 self.chat = original_message.chat
                 self.from_user = original_message.from_user
