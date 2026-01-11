@@ -156,5 +156,117 @@
     "explanation": "Svetofor o'q ko'rinishida to'g'riga va o'ngga harakatlanishga ruxsat bermoqda.",
     "category": "signs",
     "file_id": "AgACAgIAAxkBAAPiaV91owSCAj5lKTDmOSCAOzyg-O0AAgYNaxvPY6FKwuBx_m5b6OsBAAMCAAN5AAM4BA"
+  },
+  {
+    "question": "Transport vositalari chorrahadan quyidagi tartibda o'tadilar:",
+    "options": [
+      "Tramvay, Avtobus va Yengil Avtomobil",
+      "Avtobus, Yengil avtomobil, Tramvay",
+      "Avtobus, Tramvay, Yengil avtomobil",
+      "Yengil avtomobil, Tramvay, Avtobus"
+    ],
+    "explanation": "Tushuntirish kiritilmagan.",
+    "file_id": "AgACAgIAAxkBAAMQaWJo1lmAzAa1NXt0eKbztQxZkO8AAn3jMRuoj_FLwoV4gjQ18UABAAMCAAN5AAM4BA",
+    "correct_index": 0,
+    "category": "rules",
+    "id": 13
+  },
+  {
+    "question": "Qaysi transport vositalariga ko'rsatilgan yo'nalishlar bo'yicha harakatlanishga ruxsat etiladi?",
+    "options": [
+      "Avtomobil haydovchisiga",
+      "Tramvay va Avtomobil haydovchisiga",
+      "Avtomobil va Mototsikl haydovchisiga",
+      "Faqat tramvay haydovchisiga"
+    ],
+    "explanation": "Tushuntirish kiritilmagan.",
+    "file_id": "AgACAgIAAxkBAAMUaWJpFmPQiPTlhGE-BgaV1PkGvCsAAs7jMRuoj_FLH3JYM4linh4BAAMCAAN5AAM4BA",
+    "correct_index": 1,
+    "category": "rules",
+    "id": 14
+  },
+  {
+    "question": "Aholi punktidan tashqarida yuk avtomobilining yukxonasida odam tashilganda eng yuqori tezlik nechaga teng?",
+    "options": [
+      "40 km/soat",
+      "50 km/soat",
+      "60 km/soat",
+      "80 km/soat"
+    ],
+    "explanation": "YHQ II-bobi 80-bandining birinchi xatboshisiga asosan, yukxonasida odam tashiyotgan yuk avtomobillari soatiga 60 kilometrdan oshmagan tezlikda harakatlanishi kerak.",
+    "file_id": null,
+    "correct_index": 2,
+    "category": "speed",
+    "id": 15
+  },
+  {
+    "question": "Ruxsat etilgan to‘la vazni 3,5 tonnadan kam bo‘lgan yuk avtomobili haydovchisiga avtomagistrallarda nima taqiqlanadi?",
+    "options": [
+      "Ikkinchi bo‘lakdan nariroqda harakatlanish",
+      "Mexanik transport vositalarini shatakka olish",
+      "Orqa bilan harakatlanish",
+      "Barcha sanab o‘tilgan harakatlar"
+    ],
+    "explanation": "YHQ 19-bobi 121-bandining beshinchi xatboshisiga asosan, avtomagistrallarda orqaga harakatlanish taqiqlanadi.",
+    "file_id": null,
+    "correct_index": 2,
+    "category": "rules",
+    "id": 16
+  },
+  {
+    "question": "Qayta tizilishda haydovchi boshqa transport vositalariga yo‘l berishi kerakmi?",
+    "options": [
+      "Kerak, agar transport vositasi qo‘shni bo‘lak bo‘yicha yo‘lakay harakat qilsa",
+      "Kerak emas",
+      "O‘zaro qayta tizilishda barcha hollarda kerak",
+      "Faqat chorrahalarda kerak"
+    ],
+    "explanation": "YHQ 9-bobi 55-bandiga asosan: haydovchi qayta tizilishda yon bo‘lakda yo‘nalishini o‘zgartirmasdan harakatlanayotgan transport vositalariga yo‘l berishi shart.",
+    "file_id": null,
+    "correct_index": 0,
+    "category": "rules",
+    "id": 17
+  },
+  {
+    "question": "Egiluvchan ulagichda shatakka olingan transport vositasi qanday eng yuqori tezlik bilan harakatlanishi mumkin?",
+    "options": [
+      "70 km/soat",
+      "60 km/soat",
+      "50 km/soat",
+      "40 km/soat"
+    ],
+    "explanation": "YHQ II-bobi 80-bandining uchinchi xatboshisiga asosan, mexanik transport vositalarini shatakka olgan transport vositalariga tezlikni soatiga 50 kilometrdan oshirmasdan harakatlanishga ruxsat etiladi.",
+    "file_id": null,
+    "correct_index": 2,
+    "category": "speed",
+    "id": 18
+  },
+  {
+    "question": "Qornidan yopiq jarohat olgan jabrlanuvchi qanday tashiladi?",
+    "options": [
+      "Yonboshi yoki orqasiga yotqizilgan holatda, lat yegan joyga issiq grelka qo‘>",
+      "Yarim o‘tirgan holatda, tizzalari tanaga yaqinlashtiriladi",
+      "Yotqizilgan holatda, lat yegan joyiga sovuq narsa (muz, malham) qo‘yiladi",
+      "Tik holatda, qorin qismi bog‘lanadi"
+    ],
+    "explanation": "Qorin bo‘shlig‘ining yopiq jarohatlarida jabrlanuvchi yotqizilgan holatda tashi>",
+    "file_id": null,
+    "correct_index": 2,
+    "category": "rules",
+    "id": 19
+  },
+  {
+    "question": "Qaysi transport vositalariga harakatlanishga ruxsat etiladi?",
+    "options": [
+      "Qizil avtomobilga",
+      "Barcha transport vositalariga",
+      "Qizil, ko'k va yashil avtomobilga",
+      "Sariq va oq avtomobilga"
+    ],
+    "explanation": "Tushuntirish kiritilmagan.",
+    "file_id": "AgACAgIAAxkBAAMsaWJrcRfwZUPcPSndlq7eIPS6K2gAAgHqMRuQUuFL9F67BGwxo8YBAAMCAAN5AAM4BA",
+    "correct_index": 2,
+    "category": "rules",
+    "id": 20
   }
 ]

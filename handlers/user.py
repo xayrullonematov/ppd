@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import config
 from database import get_total_count, get_category_stats, load_questions
@@ -6,29 +6,70 @@ from utils.keyboards import get_category_keyboard
 from user_stats import get_user_stats, get_wrong_questions
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /start command"""
+    """Handle /start command with main menu"""
     user_id = update.effective_user.id
     is_admin = (user_id == config.ADMIN_ID)
-
-    stats = get_category_stats()
+    
+    # Get stats
     total = get_total_count()
-
+    user_stats = get_user_stats(user_id)
+    wrong_count = len(get_wrong_questions(user_id))
+    
+    # Main welcome text
     text = (
-        "🚗 Salom! PDD test botiga xush kelibsiz!\n\n"
-        f"📊 Bazada {total} ta savol:\n"
+        "🚗 <b>PDD Test Bot</b>\n\n"
+        "Haydovchilik guvohnomasini olish uchun\n"
+        "eng yaxshi tayyorgarlik dasturi!\n\n"
+        f"📊 <b>{total} ta savol</b> bazada\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🎯 ASOSIY FUNKSIYALAR</b>\n\n"
+        "📝 <b>Test topshirish</b>\n"
+        "   Kategoriya tanlang va mashq qiling\n\n"
+        "🔥 <b>Imtihon rejimi</b>\n"
+        "   Haqiqiy imtihon kabi vaqt bilan\n\n"
+        "🔄 <b>Xato javoblarni qayta ishlash</b>\n"
+        "   Noto'g'ri javoblar ustida ishlang\n\n"
+        "📊 <b>Statistika</b>\n"
+        "   O'z natijalaringizni kuzating\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "👇 Quyidagi tugmalardan birini tanlang"
+    )
+    
+    # Build keyboard
+    keyboard = [
+        [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
+        [InlineKeyboardButton("🔥 Imtihon rejimi", callback_data="menu_exam")],
+    ]
+    
+    # Only show review if user has wrong answers
+    if wrong_count > 0:
+        keyboard.append([InlineKeyboardButton(
+            f"🔄 Xato javoblar ({wrong_count})", 
+            callback_data="menu_review"
+        )])
+    
+    # Only show stats if user has taken tests
+    if user_stats['tests_taken'] > 0:
+        keyboard.append([InlineKeyboardButton(
+            "📊 Statistika", 
+            callback_data="menu_stats"
+        )])
+    
+    # Admin button
+    if is_admin:
+        keyboard.append([InlineKeyboardButton("🔐 Admin", callback_data="menu_admin")])
+    
+    # Add help button
+    keyboard.append([InlineKeyboardButton("ℹ️ Yordam", callback_data="menu_help")])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
     )
 
-    for letter, cat_info in config.CATEGORIES.items():
-        if cat_info['id'] != 'mixed':
-            count = stats.get(cat_info['id'], 0)
-            text += f"{cat_info['emoji']} {cat_info['name']}: {count} ta\n"
-
-    text += "\n/test - Test boshlash"
-
-    if is_admin:
-        text += "\n\n🔐 Admin: /admin"
-
-    await update.message.reply_text(text)
 
 async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /test command - show category selection"""
@@ -51,10 +92,27 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stats = get_user_stats(user_id)
     
     if stats['tests_taken'] == 0:
-        await update.message.reply_text(
-            "📊 Sizda hali statistika yo'q.\n\n"
-            "/test buyrug'i bilan test boshlang!"
+        text = (
+            "📊 <b>Statistika</b>\n\n"
+            "Sizda hali statistika yo'q.\n\n"
+            "Test topshirib, natijalaringizni kuzatishni boshlang!"
         )
+        
+        keyboard = [[InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if update.callback_query:
+            await update.callback_query.edit_message_text(
+                text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
         return
     
     # Calculate overall percentage
@@ -68,19 +126,25 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if stats['test_history']:
         best_score = max(t['percentage'] for t in stats['test_history'])
     
+    # Calculate average
+    avg_score = 0
+    if stats['test_history']:
+        avg_score = round(sum(t['percentage'] for t in stats['test_history']) / len(stats['test_history']), 1)
+    
     text = (
-        f"📊 Sizning statistikangiz:\n\n"
-        f"Jami testlar: {stats['tests_taken']}\n"
-        f"Jami savollar: {stats['total_questions']}\n"
-        f"To'g'ri javoblar: {stats['correct_answers']}\n"
-        f"O'rtacha ball: {overall}%\n"
-        f"Eng yaxshi natija: {best_score}%\n"
-        f"Xato javoblar: {len(stats['wrong_questions'])}\n\n"
+        f"📊 <b>Sizning statistikangiz</b>\n\n"
+        f"<b>Umumiy:</b>\n"
+        f"Testlar: {stats['tests_taken']} ta\n"
+        f"Savollar: {stats['total_questions']} ta\n"
+        f"To'g'ri: {stats['correct_answers']} ta\n"
+        f"O'rtacha ball: {avg_score}%\n"
+        f"Eng yaxshi: {best_score}%\n"
+        f"Xato javoblar: {len(stats['wrong_questions'])} ta\n\n"
     )
     
     # Category breakdown
     if stats['category_stats']:
-        text += "📈 Kategoriya bo'yicha:\n"
+        text += "<b>📈 Kategoriya bo'yicha:</b>\n"
         for cat_id, cat_stats in stats['category_stats'].items():
             cat_info = next(
                 (c for c in config.CATEGORIES.values() if c['id'] == cat_id),
@@ -90,10 +154,45 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 pct = round((cat_stats['correct'] / cat_stats['total']) * 100, 1)
                 text += f"{cat_info['emoji']} {cat_info['name']}: {pct}% ({cat_stats['correct']}/{cat_stats['total']})\n"
     
-    if len(stats['wrong_questions']) > 0:
-        text += f"\n💡 /review - Xato javoblarni qayta ishlash"
+    # Recent tests
+    if stats['test_history']:
+        text += "\n<b>📅 Oxirgi testlar:</b>\n"
+        for test in stats['test_history'][-5:]:
+            cat_info = next(
+                (c for c in config.CATEGORIES.values() if c['id'] == test['category']),
+                None
+            )
+            if cat_info:
+                emoji = cat_info['emoji']
+            else:
+                emoji = "📝"
+            text += f"{emoji} {test['score']}/{test['total']} ({test['percentage']}%)\n"
     
-    await update.message.reply_text(text)
+    keyboard = [
+        [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
+        [InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")]
+    ]
+    
+    if len(stats['wrong_questions']) > 0:
+        keyboard.insert(1, [InlineKeyboardButton(
+            f"🔄 Xato javoblar ({len(stats['wrong_questions'])})", 
+            callback_data="menu_review"
+        )])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if update.callback_query:
+        await update.callback_query.edit_message_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    else:
+        await update.message.reply_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
 
 async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start review mode with wrong answers"""
@@ -101,13 +200,34 @@ async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     wrong_ids = get_wrong_questions(user_id)
     
     if not wrong_ids:
-        await update.message.reply_text(
-            "✅ Sizda xato javoblar yo'q!\n\n"
-            "Barcha savollarga to'g'ri javob bergansiz. Ajoyib! 🎉"
+        text = (
+            "✅ <b>Xato javoblar yo'q!</b>\n\n"
+            "Barcha savollarga to'g'ri javob bergansiz. Ajoyib! 🎉\n\n"
+            "Yangi testlar topshiring va ko'nikmalaringizni oshiring!"
         )
+        
+        keyboard = [
+            [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
+            [InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if update.callback_query:
+            await update.callback_query.edit_message_text(
+                text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
         return
     
     # Get wrong questions
+    from database import load_questions
     all_questions = load_questions()
     wrong_questions = [q for q in all_questions if q['id'] in wrong_ids]
     
@@ -115,9 +235,8 @@ async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Xato javoblar topilmadi.")
         return
     
-    # Start review test with wrong questions
+    # Start review test
     from handlers.test import user_sessions, send_question
-    from database import get_random_questions
     import random
     
     # Shuffle wrong questions
@@ -142,11 +261,61 @@ async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'category': 'review'
     }
     
-    await update.message.reply_text(
-        f"🔄 Xato javoblarni qayta ishlash\n\n"
+    text = (
+        f"🔄 <b>Xato javoblarni qayta ishlash</b>\n\n"
         f"📚 Savollar: {len(shuffled)} ta\n"
         f"💡 Bu savollar sizda xato javoblar\n\n"
         f"Omad! 🍀"
     )
     
-    await send_question(update, context, user_id)
+    if update.callback_query:
+        await update.callback_query.message.reply_text(text, parse_mode='HTML')
+        await send_question(update, context, user_id)
+    else:
+        await update.message.reply_text(text, parse_mode='HTML')
+        await send_question(update, context, user_id)
+
+async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show exam mode (redirects to exam_mode.py)"""
+    from handlers.exam_mode import exam_command as real_exam_command
+    await real_exam_command(update, context)
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show help information"""
+    text = (
+        "ℹ️ <b>Yordam</b>\n\n"
+        "<b>Buyruqlar:</b>\n"
+        "/start - Bosh menyu\n"
+        "/test - Test boshlash\n"
+        "/exam - Imtihon rejimi\n"
+        "/review - Xato javoblarni qayta ishlash\n"
+        "/stats - Statistika\n"
+        "/help - Yordam\n\n"
+        "<b>Test haqida:</b>\n"
+        "• Har bir testda 10 ta savol\n"
+        "• Kategoriya bo'yicha tanlash mumkin\n"
+        "• Javoblar tasodifiy tartibda\n"
+        "• Noto'g'ri javoblar saqlanadi\n\n"
+        "<b>Imtihon rejimi:</b>\n"
+        "• 20 ta savol\n"
+        "• 20 daqiqa vaqt\n"
+        "• Haqiqiy imtihon kabi\n\n"
+        "<b>Murojaat:</b>\n"
+        "Savol yoki taklif bo'lsa: @mrxnm"
+    )
+    
+    keyboard = [[InlineKeyboardButton("◀️ Orqaga", callback_data="menu_back")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if update.callback_query:
+        await update.callback_query.edit_message_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    else:
+        await update.message.reply_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
