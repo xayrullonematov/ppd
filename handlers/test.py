@@ -1,15 +1,15 @@
 """
-Test session management
+Test session management WITH AUTO MESSAGE CLEANUP
 """
 
 from telegram import Update
 from telegram.ext import ContextTypes
 from database import get_random_questions
-from user_stats import record_answer, record_test_completion, get_wrong_questions
+from user_stats import record_answer, record_test_completion
 from utils.keyboards import get_answer_keyboard, get_result_keyboard
 import config
 
-# Store active test sessions
+# Store active test sessions with message tracking
 user_sessions = {}
 
 async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
@@ -27,12 +27,14 @@ async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE, categor
             await query.edit_message_text("❌ Bu bo'limda savollar yo'q.")
             return
         
-        # Store session
+        # Store session with message tracking
         user_sessions[user_id] = {
             'questions': questions,
             'current': 0,
             'correct': 0,
-            'category': category
+            'category': category,
+            'last_question_id': None,  # Track for deletion
+            'last_result_id': None      # Track for deletion
         }
         
         cat_info = next(
@@ -40,19 +42,36 @@ async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE, categor
             config.CATEGORIES['d']
         )
         
-        await query.edit_message_text(
-            f"🎯 Test boshlandi!\n\n"
+        # Delete the category selection message
+        try:
+            await query.message.delete()
+        except:
+            pass
+        
+        # Send start message
+        start_msg = await query.message.chat.send_message(
+            f"🎯 <b>Test boshlandi!</b>\n\n"
             f"📚 Bo'lim: {cat_info['name']}\n"
             f"❓ Savollar: {len(questions)} ta\n\n"
-            f"Omad! 🍀"
+            f"Omad! 🍀",
+            parse_mode='HTML'
         )
         
-        await send_question(update, context, user_id)
+        # Delete start message after 2 seconds
+        await asyncio.sleep(2)
+        try:
+            await start_msg.delete()
+        except:
+            pass
+        
+        await send_question(query.message, context, user_id)
         
     except Exception as e:
-        await query.message.reply_text(f"❌ Xatolik: {str(e)}")
+        await query.message.chat.send_message(f"❌ Xatolik: {str(e)}")
 
-async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
+import asyncio
+
+async def send_question(message, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     """Send next question to user"""
     
     if user_id not in user_sessions:
@@ -64,7 +83,7 @@ async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, user
     
     # Check if test is complete
     if current_num >= len(questions):
-        await show_results(update, context, user_id)
+        await show_results(message, context, user_id)
         return
     
     question = questions[current_num]
@@ -74,47 +93,41 @@ async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, user
         keyboard = get_answer_keyboard(question['shuffled_options'])
         
         question_text = (
-            f"❓ Savol {current_num + 1}/{len(questions)}\n\n"
+            f"❓ <b>Savol {current_num + 1}/{len(questions)}</b>\n\n"
             f"{question['question']}"
         )
         
         # Send with image if available
         if question.get('file_id'):
             try:
-                if update.callback_query:
-                    await update.callback_query.message.reply_photo(
-                        photo=question['file_id'],
-                        caption=question_text,
-                        reply_markup=keyboard
-                    )
-                else:
-                    await update.message.reply_photo(
-                        photo=question['file_id'],
-                        caption=question_text,
-                        reply_markup=keyboard
-                    )
-            except Exception as img_error:
-                # Fallback to text if image fails
-                print(f"Image failed: {img_error}")
-                if update.callback_query:
-                    await update.callback_query.message.reply_text(question_text, reply_markup=keyboard)
-                else:
-                    await update.message.reply_text(question_text, reply_markup=keyboard)
+                sent_msg = await message.chat.send_photo(
+                    photo=question['file_id'],
+                    caption=question_text,
+                    reply_markup=keyboard,
+                    parse_mode='HTML'
+                )
+            except:
+                sent_msg = await message.chat.send_message(
+                    question_text, 
+                    reply_markup=keyboard,
+                    parse_mode='HTML'
+                )
         else:
-            if update.callback_query:
-                await update.callback_query.message.reply_text(question_text, reply_markup=keyboard)
-            else:
-                await update.message.reply_text(question_text, reply_markup=keyboard)
-                
+            sent_msg = await message.chat.send_message(
+                question_text, 
+                reply_markup=keyboard,
+                parse_mode='HTML'
+            )
+        
+        # Store message ID for cleanup
+        session['last_question_id'] = sent_msg.message_id
+            
     except Exception as e:
-        error_msg = f"❌ Savol yuborishda xatolik: {str(e)}"
-        if update.callback_query:
-            await update.callback_query.message.reply_text(error_msg)
-        else:
-            await update.message.reply_text(error_msg)
+        print(f"Error sending question: {e}")
+        await message.chat.send_message(f"❌ Savol yuborishda xatolik: {str(e)}")
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answer_index: int):
-    """Handle user's answer"""
+    """Handle user's answer WITH MESSAGE CLEANUP"""
     query = update.callback_query
     await query.answer()
     
@@ -144,22 +157,45 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answ
         
         if is_correct:
             session['correct'] += 1
-            result_text = "✅ To'g'ri!\n\n"
+            result_text = "✅ <b>To'g'ri!</b>\n\n"
         else:
             correct_letter = chr(65 + question['shuffled_correct_index'])
-            result_text = f"❌ Noto'g'ri. To'g'ri javob: {correct_letter})\n\n"
+            result_text = f"❌ <b>Noto'g'ri. To'g'ri javob: {correct_letter})</b>\n\n"
         
         result_text += f"💡 {question['explanation']}"
         
-        await query.message.reply_text(result_text)
+        # Delete the question message
+        try:
+            await query.message.delete()
+        except:
+            pass
         
+        # Send result
+        result_msg = await query.message.chat.send_message(
+            result_text,
+            parse_mode='HTML'
+        )
+        
+        # Store result message ID
+        session['last_result_id'] = result_msg.message_id
+        
+        # Move to next question
         session['current'] += 1
-        await send_question(update, context, user_id)
+        
+        # Wait 3 seconds then delete result and send next question
+        await asyncio.sleep(3)
+        
+        try:
+            await result_msg.delete()
+        except:
+            pass
+        
+        await send_question(query.message, context, user_id)
         
     except Exception as e:
         await query.message.reply_text(f"❌ Xatolik: {str(e)}")
 
-async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
+async def show_results(message, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     """Show test results"""
     
     if user_id not in user_sessions:
@@ -185,7 +221,7 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         )
         
         result_text = (
-            f"✅ Test tugadi!\n\n"
+            f"✅ <b>Test tugadi!</b>\n\n"
             f"📚 Bo'lim: {cat_info['name']}\n"
             f"📊 Natija: {correct}/{total} ({percentage:.0f}%)\n\n"
         )
@@ -201,16 +237,13 @@ async def show_results(update: Update, context: ContextTypes.DEFAULT_TYPE, user_
         
         keyboard = get_result_keyboard()
         
-        if update.callback_query:
-            await update.callback_query.message.reply_text(result_text, reply_markup=keyboard)
-        else:
-            await update.message.reply_text(result_text, reply_markup=keyboard)
+        await message.chat.send_message(
+            result_text, 
+            reply_markup=keyboard,
+            parse_mode='HTML'
+        )
         
         del user_sessions[user_id]
         
     except Exception as e:
-        error_msg = f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}"
-        if update.callback_query:
-            await update.callback_query.message.reply_text(error_msg)
-        else:
-            await update.message.reply_text(error_msg)
+        await message.chat.send_message(f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}")

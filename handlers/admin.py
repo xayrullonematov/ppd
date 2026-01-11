@@ -1,5 +1,5 @@
 """
-Admin commands for adding questions
+Admin commands for adding questions (WITH BROADCAST)
 """
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -7,6 +7,9 @@ from telegram.ext import ContextTypes
 import config
 from database import add_question, get_category_stats, get_total_count
 from utils.parser import parse_question_caption
+
+# Import broadcast functions
+from handlers.broadcast import broadcast_command, handle_broadcast_message, broadcast_state
 
 # Store pending questions waiting for answer + category
 pending_admin_questions = {}
@@ -28,50 +31,59 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if cat_info['id'] != 'mixed'
     ])
     
-    # Add advanced tools button
+    # Get user count for broadcast
+    from user_stats import load_stats
+    user_count = len(load_stats())
+    
+    # Admin tools buttons
     keyboard = [
-        [InlineKeyboardButton("🔧 Admin asboblari", callback_data="admin_tools")]
+        [InlineKeyboardButton("🔧 Admin asboblari", callback_data="admin_tools")],
+        [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")]
     ]
     
     message_text = (
-        f"🔐 Admin panel\n\n"
-        f"📊 Statistika:\n{stats_text}\n\n"
-        f"Jami: {total}\n\n"
-        f"📝 Savol qo'shish:\n\n"
+        f"🔐 <b>Admin panel</b>\n\n"
+        f"📊 <b>Statistika:</b>\n{stats_text}\n\n"
+        f"Jami savollar: {total}\n"
+        f"👥 Foydalanuvchilar: {user_count}\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"📝 <b>Savol qo'shish:</b>\n\n"
         f"Rasm yoki matn yuboring:\n"
-        f"```\n"
+        f"<code>"
         f"Savol matni?\n\n"
         f"A) Javob 1\n"
         f"B) Javob 2\n"
         f"C) Javob 3\n"
         f"D) Javob 4\n\n"
         f"---\n\n"
-        f"Tushuntirish\n"
-        f"```\n\n"
+        f"Tushuntirish"
+        f"</code>\n\n"
         f"Keyin bot so'raydi:\n"
         f"To'g'ri javob va kategoriya?\n\n"
         f"Siz javob berasiz:\n"
-        f"`0 a` - Birinchi javob to'g'ri, Belgilar\n"
-        f"`2 d` - Uchinchi javob to'g'ri, Aralash\n\n"
-        f"Kategoriyalar:\n"
+        f"<code>0 a</code> - Birinchi javob to'g'ri, Belgilar\n"
+        f"<code>2 d</code> - Uchinchi javob to'g'ri, Aralash\n\n"
+        f"<b>Kategoriyalar:</b>\n"
         f"a = 🚦 Belgilar\n"
         f"b = 🚗 Qoidalar\n"
         f"c = ⚡ Tezlik\n"
         f"d = 🧠 Aralash\n\n"
-        f"🔧 /tools - Tahrirlash, o'chirish, qidirish"
+        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔧 /tools - Tahrirlash, o'chirish, qidirish\n"
+        f"📢 /broadcast - Hammaga xabar yuborish"
     )
     
     # Check if this is from callback or message
     if hasattr(update, 'callback_query') and update.callback_query:
         await update.callback_query.edit_message_text(
             message_text,
-            parse_mode='Markdown',
+            parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
         await update.message.reply_text(
             message_text,
-            parse_mode='Markdown',
+            parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -80,6 +92,11 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
     user_id = update.effective_user.id
     
     if user_id != config.ADMIN_ID:
+        return
+    
+    # Check if in broadcast mode
+    if user_id in broadcast_state:
+        await handle_broadcast_message(update, context)
         return
     
     # Check if replying with answer + category
@@ -91,9 +108,9 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
         
         if len(parts) != 2:
             await update.message.reply_text(
-                "❌ Format: `0 a` (javob_raqami kategoriya)\n"
-                "Masalan: `0 a` yoki `2 d`",
-                parse_mode='Markdown'
+                "❌ Format: <code>0 a</code> (javob_raqami kategoriya)\n"
+                "Masalan: <code>0 a</code> yoki <code>2 d</code>",
+                parse_mode='HTML'
             )
             return
         
@@ -122,10 +139,9 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             
             # Show confirmation
             cat_name = config.get_category_name(category_letter)
-            correct_option = pending_q['options'][answer_index]
             
             preview = (
-                f"✅ Savol #{question_id} qo'shildi!\n\n"
+                f"✅ <b>Savol #{question_id} qo'shildi!</b>\n\n"
                 f"📚 {cat_name}\n\n"
                 f"❓ {pending_q['question']}\n\n"
             )
@@ -137,14 +153,17 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             preview += f"\n💡 {pending_q['explanation']}\n\n"
             preview += f"📊 Jami: {get_total_count()} ta savol"
             
-            await update.message.reply_text(preview)
+            await update.message.reply_text(preview, parse_mode='HTML')
             
             # Clean up
             del pending_admin_questions[user_id]
             return
             
         except ValueError:
-            await update.message.reply_text("❌ Format: `0 a` (raqam harf)", parse_mode='Markdown')
+            await update.message.reply_text(
+                "❌ Format: <code>0 a</code> (raqam harf)", 
+                parse_mode='HTML'
+            )
             return
         except Exception as e:
             await update.message.reply_text(f"❌ Xatolik: {str(e)}")
@@ -178,7 +197,7 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
         
         # Show preview and ask for answer + category
         preview = (
-            f"✅ Savol qabul qilindi!\n\n"
+            f"✅ <b>Savol qabul qilindi!</b>\n\n"
             f"❓ {parsed['question']}\n\n"
         )
         
@@ -187,15 +206,19 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
         
         preview += (
             f"\n💡 {parsed['explanation']}\n\n"
-            f"❔ To'g'ri javob va kategoriya?\n\n"
-            f"Format: `javob_raqami kategoriya`\n"
-            f"Masalan: `0 a` yoki `2 d`\n\n"
+            f"❔ <b>To'g'ri javob va kategoriya?</b>\n\n"
+            f"Format: <code>javob_raqami kategoriya</code>\n"
+            f"Masalan: <code>0 a</code> yoki <code>2 d</code>\n\n"
             f"a=🚦Belgilar b=🚗Qoidalar c=⚡Tezlik d=🧠Aralash"
         )
         
         pending_admin_questions[user_id] = parsed
         
-        await update.message.reply_text(preview, parse_mode='Markdown')
+        await update.message.reply_text(preview, parse_mode='HTML')
         
     except Exception as e:
         await update.message.reply_text(f"❌ Xatolik yuz berdi: {str(e)}")
+
+# Export broadcast functions
+__all__ = ['admin_command', 'handle_admin_message', 'pending_admin_questions', 
+           'broadcast_command', 'handle_broadcast_message']

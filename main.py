@@ -1,3 +1,7 @@
+"""
+PDD Test Bot - Main entry point (FIXED VERSION)
+"""
+
 import logging
 from telegram import Update
 from telegram.ext import (
@@ -10,8 +14,8 @@ from telegram.ext import (
 )
 
 import config
-from handlers.user import start, test_command, stats_command, review_command
-from handlers.admin import admin_command, handle_admin_message
+from handlers.user import start, test_command, stats_command, review_command, help_command
+from handlers.admin import admin_command, handle_admin_message, broadcast_command
 from handlers.test import start_test, handle_answer, user_sessions
 from handlers.admin_tools import (
     admin_tools_command,
@@ -45,12 +49,25 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# Track last message IDs for cleanup
+user_last_messages = {}
+
+async def cleanup_old_message(chat_id: int, message_id: int):
+    """Delete old message if it exists"""
+    try:
+        from telegram import Bot
+        bot = Bot(token=config.TOKEN)
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except:
+        pass  # Message already deleted or doesn't exist
+
 # Callback query router
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Route callback queries to appropriate handlers"""
     query = update.callback_query
     data = query.data
     user_id = update.effective_user.id
+    chat_id = query.message.chat_id
 
     # Exam mode callbacks
     if data == "exam_start":
@@ -58,7 +75,23 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "exam_cancel":
-        await cancel_exam(update, context)
+        # Cancel and go back to main menu
+        await query.answer()
+        await query.message.delete()
+        
+        # Call start command
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
+        
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
+        
+        await start(fake_update, context)
         return
 
     # Check if user is in exam mode - priority handling
@@ -68,34 +101,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await handle_exam_answer(update, context, answer_index)
             return
 
-# Menu navigation callbacks
-
+    # Menu navigation callbacks
     elif data == "menu_back":
-        # Go back to main menu
         await query.answer()
-        from handlers.user import start
+        await query.message.delete()
         
-        # Delete old message and send new one
-        try:
-            await query.message.delete()
-        except:
-            pass
+        # Send fresh start menu
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
         
-        # Create fake update for start command
-        class FakeMessage:
-            def __init__(self, original_message):
-                self.message_id = original_message.message_id
-                self.chat = original_message.chat
-                self.from_user = original_message.from_user
-                
-            async def reply_text(self, *args, **kwargs):
-                return await query.message.chat.send_message(*args, **kwargs)
-        
-        fake_update = Update(
-            update_id=update.update_id,
-            message=FakeMessage(query.message)
-        )
-        fake_update.effective_user = query.from_user
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
         
         await start(fake_update, context)
         return
@@ -103,6 +124,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "menu_test":
         await query.answer()
         keyboard = get_category_keyboard()
+        # Add back button
+        from telegram import InlineKeyboardButton
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")
+        ])
         await query.edit_message_text(
             "📚 Qaysi bo'limdan test topshirmoqchisiz?",
             reply_markup=keyboard
@@ -111,7 +137,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "menu_exam":
         await query.answer()
-        # Call your exam_command
         await exam_command(update, context)
         return
     
@@ -127,29 +152,24 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "menu_admin":
         await query.answer()
+        await query.message.delete()
         
-        # Create fake update for admin command
-        class FakeMessage:
-            def __init__(self, original_message):
-                self.message_id = original_message.message_id
-                self.chat = original_message.chat
-                self.from_user = original_message.from_user
-                
-            async def reply_text(self, *args, **kwargs):
-                return await query.message.chat.send_message(*args, **kwargs)
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
         
-        fake_update = Update(
-            update_id=update.update_id,
-            message=FakeMessage(query.message)
-        )
-        fake_update.effective_user = query.from_user
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
         
         await admin_command(fake_update, context)
         return
     
     elif data == "menu_help":
         await query.answer()
-        from handlers.user import help_command
         await help_command(update, context)
         return
 
@@ -160,11 +180,18 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("answer_"):
         answer_index = int(data.split("_")[1])
+        # Track message for cleanup
+        if user_id in user_last_messages:
+            await cleanup_old_message(chat_id, user_last_messages[user_id])
         await handle_answer(update, context, answer_index)
 
     elif data == "back_to_categories":
         await query.answer()
         keyboard = get_category_keyboard()
+        from telegram import InlineKeyboardButton
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")
+        ])
         await query.edit_message_text(
             "📚 Qaysi bo'limdan test topshirmoqchisiz?",
             reply_markup=keyboard
@@ -172,15 +199,35 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "home":
         await query.answer()
-        await query.message.reply_text(
-            "🏠 Bosh sahifa\n\n"
-            "/test - Mashq test\n"
-            "/exam - Haqiqiy imtihon"
-        )
+        await query.message.delete()
+        
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
+        
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
+        
+        await start(fake_update, context)
 
     # Admin tools callbacks
     elif data == "admin_tools":
-        await admin_tools_command(update, context)
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
+        
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
+        
+        await admin_tools_command(fake_update, context)
 
     elif data == "admin_list":
         await list_questions(update, context, page=0)
@@ -231,7 +278,19 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await export_questions(update, context)
 
     elif data == "admin_back":
-        await admin_command(update, context)
+        await query.message.delete()
+        fake_message = type('obj', (object,), {
+            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
+            'chat': query.message.chat,
+            'from_user': query.from_user
+        })()
+        
+        fake_update = type('obj', (object,), {
+            'message': fake_message,
+            'effective_user': query.from_user
+        })()
+        
+        await admin_command(fake_update, context)
 
 async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle text messages (for admin edits and searches)"""
@@ -246,6 +305,10 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         elif state['action'] == 'search':
             await handle_search(update, context)
+            return
+        elif state['action'] == 'broadcast':
+            from handlers.admin import handle_broadcast_message
+            await handle_broadcast_message(update, context)
             return
 
     # Otherwise, handle as normal admin message (adding questions)
@@ -270,11 +333,13 @@ def main():
     # Add command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("test", test_command))
-    application.add_handler(CommandHandler("exam", exam_command))  # NEW!
+    application.add_handler(CommandHandler("exam", exam_command))
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("review", review_command))
+    application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("admin", admin_command))
     application.add_handler(CommandHandler("tools", admin_tools_command))
+    application.add_handler(CommandHandler("broadcast", broadcast_command))
     application.add_handler(CommandHandler("cancel", cancel_command))
 
     # Add callback query handler
@@ -296,6 +361,7 @@ def main():
     logger.info(f"📊 Admin ID: {config.ADMIN_ID}")
     logger.info("🔧 Admin tools yoqilgan!")
     logger.info("🎓 Exam mode yoqilgan!")
+    logger.info("📢 Broadcast yoqilgan!")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
