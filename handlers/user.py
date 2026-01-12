@@ -16,22 +16,47 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_stats = get_user_stats(user_id)
     wrong_count = len(get_wrong_questions(user_id))
     
+    # Get badges (first 3)
+    badge_display = ""
+    try:
+        from handlers.badges import get_user_badges
+        badges = get_user_badges(user_id)
+        if badges:
+            badge_display = " ".join([b['emoji'] for b in badges[:3]])
+            if len(badges) > 3:
+                badge_display += f" +{len(badges)-3}"
+            badge_display = f"\n🏅 {badge_display}"
+    except:
+        pass
+    
+    # Get rank
+    rank_display = ""
+    try:
+        from handlers.leaderboard import get_user_rank
+        rank, _ = get_user_rank(user_id, 'alltime')
+        if rank > 0 and rank <= 10:
+            rank_display = f"\n🏆 Reyting: #{rank}"
+    except:
+        pass
+    
     # Main welcome text
     text = (
         "🚗 <b>PDD Test Bot</b>\n\n"
         "Haydovchilik guvohnomasini olish uchun\n"
         "eng yaxshi tayyorgarlik dasturi!\n\n"
-        f"📊 <b>{total} ta savol</b> bazada\n\n"
+        f"📊 <b>{total} ta savol</b> bazada"
+        f"{badge_display}"
+        f"{rank_display}\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "<b>🎯 ASOSIY FUNKSIYALAR</b>\n\n"
         "📝 <b>Test topshirish</b>\n"
         "   Kategoriya tanlang va mashq qiling\n\n"
         "🔥 <b>Imtihon rejimi</b>\n"
         "   Haqiqiy imtihon kabi vaqt bilan\n\n"
-        "🔄 <b>Xato javoblarni qayta ishlash</b>\n"
-        "   Noto'g'ri javoblar ustida ishlang\n\n"
-        "📊 <b>Statistika</b>\n"
-        "   O'z natijalaringizni kuzating\n\n"
+        "🏆 <b>Reytingi</b>\n"
+        "   Eng yaxshi o'quvchilar ro'yxati\n\n"
+        "🏅 <b>Nishonlar</b>\n"
+        "   O'z yutuqlaringizni ko'ring\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "👇 Quyidagi tugmalardan birini tanlang"
     )
@@ -48,6 +73,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔄 Xato javoblar ({wrong_count})", 
             callback_data="menu_review"
         )])
+    
+    # Leaderboard and badges
+    keyboard.append([
+        InlineKeyboardButton("🏆 Reytingi", callback_data="menu_leaderboard"),
+        InlineKeyboardButton("🏅 Nishonlar", callback_data="menu_badges")
+    ])
     
     # Only show stats if user has taken tests
     if user_stats['tests_taken'] > 0:
@@ -88,7 +119,7 @@ async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show user statistics"""
+    """Show user statistics with enhanced info"""
     user_id = update.effective_user.id
     stats = get_user_stats(user_id)
     
@@ -116,32 +147,35 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
     
-    # Calculate overall percentage
-    if stats['total_questions'] > 0:
-        overall = round((stats['correct_answers'] / stats['total_questions']) * 100, 1)
-    else:
-        overall = 0
-    
-    # Find best score
-    best_score = 0
-    if stats['test_history']:
-        best_score = max(t['percentage'] for t in stats['test_history'])
-    
-    # Calculate average
-    avg_score = 0
-    if stats['test_history']:
-        avg_score = round(sum(t['percentage'] for t in stats['test_history']) / len(stats['test_history']), 1)
-    
-    text = (
-        f"📊 <b>Sizning statistikangiz</b>\n\n"
-        f"<b>Umumiy:</b>\n"
-        f"Testlar: {stats['tests_taken']} ta\n"
-        f"Savollar: {stats['total_questions']} ta\n"
-        f"To'g'ri: {stats['correct_answers']} ta\n"
-        f"O'rtacha ball: {avg_score}%\n"
-        f"Eng yaxshi: {best_score}%\n"
-        f"Xato javoblar: {len(stats['wrong_questions'])} ta\n\n"
-    )
+    # Get enhanced stats
+    try:
+        from user_stats import get_user_summary
+        text = get_user_summary(user_id)
+    except:
+        # Fallback to basic stats
+        if stats['total_questions'] > 0:
+            overall = round((stats['correct_answers'] / stats['total_questions']) * 100, 1)
+        else:
+            overall = 0
+        
+        best_score = 0
+        if stats['test_history']:
+            best_score = max(t['percentage'] for t in stats['test_history'])
+        
+        avg_score = 0
+        if stats['test_history']:
+            avg_score = round(sum(t['percentage'] for t in stats['test_history']) / len(stats['test_history']), 1)
+        
+        text = (
+            f"📊 <b>Sizning statistikangiz</b>\n\n"
+            f"<b>Umumiy:</b>\n"
+            f"Testlar: {stats['tests_taken']} ta\n"
+            f"Savollar: {stats['total_questions']} ta\n"
+            f"To'g'ri: {stats['correct_answers']} ta\n"
+            f"O'rtacha ball: {avg_score}%\n"
+            f"Eng yaxshi: {best_score}%\n"
+            f"Xato javoblar: {len(stats['wrong_questions'])} ta\n\n"
+        )
     
     # Category breakdown
     if stats['category_stats']:
@@ -171,6 +205,10 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     keyboard = [
         [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
+        [
+            InlineKeyboardButton("🏆 Reytingi", callback_data="menu_leaderboard"),
+            InlineKeyboardButton("🏅 Nishonlar", callback_data="menu_badges")
+        ],
         [InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")]
     ]
     
@@ -320,6 +358,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/exam - Imtihon rejimi\n"
         "/review - Xato javoblarni qayta ishlash\n"
         "/stats - Statistika\n"
+        "/leaderboard - Reytingi\n"
+        "/badges - Nishonlar\n"
         "/help - Yordam\n\n"
         "<b>Test haqida:</b>\n"
         "• Har bir testda 10 ta savol\n"
@@ -330,6 +370,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• 20 ta savol\n"
         "• 20 daqiqa vaqt\n"
         "• Haqiqiy imtihon kabi\n\n"
+        "<b>Reytingi va Nishonlar:</b>\n"
+        "• Haftalik, oylik, barcha vaqt reytingi\n"
+        "• Ball tizimi: aniq va adolatli\n"
+        "• 25+ yutuq nishonlari\n"
+        "• Maxsus va afsonaviy nishonlar\n\n"
         "<b>Murojaat:</b>\n"
         "Savol yoki taklif bo'lsa: @mrxnm"
     )

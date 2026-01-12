@@ -41,6 +41,16 @@ from handlers.exam_mode import (
 )
 from utils.keyboards import get_category_keyboard
 
+from handlers.leaderboard import (
+    leaderboard_command,
+    show_leaderboard,
+    show_my_rank
+)
+from handlers.badges import (
+    badges_command,
+    show_all_badges
+)
+
 # Setup logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -75,6 +85,36 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "exam_start":
         await start_exam(update, context)
         return
+    # Leaderboard callbacks
+    elif data == "menu_leaderboard" or data == "leaderboard_menu":
+        await leaderboard_command(update, context)
+        return
+
+    elif data == "leaderboard_weekly":
+        await show_leaderboard(update, context, 'weekly')
+        return
+
+    elif data == "leaderboard_monthly":
+        await show_leaderboard(update, context, 'monthly')
+        return
+
+    elif data == "leaderboard_alltime":
+        await show_leaderboard(update, context, 'alltime')
+        return
+
+    elif data == "leaderboard_myrank":
+        await show_my_rank(update, context)
+        return
+
+     # Badge callbacks
+    elif data == "menu_badges" or data == "badges_my":
+        await badges_command(update, context)
+        return
+
+    elif data == "badges_all":
+        await show_all_badges(update, context)
+        return
+
 
     elif data == "exam_cancel":
         # Cancel and go back to main menu
@@ -366,6 +406,8 @@ def main():
     application.add_handler(CommandHandler("tools", admin_tools_command))
     application.add_handler(CommandHandler("broadcast", broadcast_command))
     application.add_handler(CommandHandler("cancel", cancel_command))
+    application.add_handler(CommandHandler("leaderboard", leaderboard_command))
+    application.add_handler(CommandHandler("badges", badges_command))
 
     # Add callback query handler
     application.add_handler(CallbackQueryHandler(handle_callback))
