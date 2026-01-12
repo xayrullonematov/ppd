@@ -4,6 +4,7 @@ Badge System - Achievement badges for user accomplishments
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from utils.badge_images import generate_badge_certificate
 from typing import Dict, List, Set
 import json
 from datetime import datetime
@@ -448,32 +449,74 @@ async def show_all_badges(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def notify_new_badge(context: ContextTypes.DEFAULT_TYPE, user_id: int, badge_id: str):
-    """Send notification when user earns a new badge"""
+    """Send notification with certificate image when user earns a new badge"""
     if badge_id not in BADGE_DEFINITIONS:
         return
     
     badge = BADGE_DEFINITIONS[badge_id]
     
-    text = (
-        f"🎉 <b>YANGI NISHON!</b> 🎉\n\n"
-        f"{badge['emoji']} <b>{badge['name']}</b>\n\n"
-        f"{badge['description']}\n\n"
-        f"Tabriklaymiz! Davom eting! 🚀"
-    )
-    
-    keyboard = [
-        [InlineKeyboardButton("🏅 Mening nishonlarim", callback_data="badges_my")]
-    ]
-    
+    # Get username
     try:
-        await context.bot.send_message(
+        chat = await context.bot.get_chat(user_id)
+        if chat.username:
+            username = chat.username
+        elif chat.first_name:
+            username = chat.first_name
+        else:
+            username = f"User{user_id}"
+    except Exception as e:
+        print(f"Error getting username: {e}")
+        username = f"User{user_id}"
+    
+    # Generate certificate image
+    try:
+        date_earned = datetime.now().strftime('%d.%m.%Y')
+        certificate = generate_badge_certificate(
+            badge_name=badge['name'],
+            badge_emoji=badge['emoji'],
+            username=username,
+            date_earned=date_earned
+        )
+        
+        # Caption text
+        caption = (
+            f"🎉 <b>YANGI YUTUQ!</b> 🎉\n\n"
+            f"{badge['emoji']} <b>{badge['name']}</b>\n\n"
+            f"{badge['description']}\n\n"
+            f"Tabriklaymiz! Do'stlaringiz bilan ulashing! 👆"
+        )
+        
+        # Send certificate image
+        await context.bot.send_photo(
             chat_id=user_id,
-            text=text,
-            reply_markup=InlineKeyboardMarkup(keyboard),
+            photo=certificate,
+            caption=caption,
             parse_mode='HTML'
         )
+        
+        print(f"✅ Badge certificate sent to user {user_id}: {badge['name']}")
+        
     except Exception as e:
-        print(f"Error sending badge notification: {e}")
+        print(f"❌ Error sending badge certificate: {e}")
+        # Fallback to text notification if image fails
+        text = (
+            f"🎉 <b>YANGI NISHON!</b> 🎉\n\n"
+            f"{badge['emoji']} <b>{badge['name']}</b>\n\n"
+            f"{badge['description']}\n\n"
+            f"Tabriklaymiz! Davom eting! 🚀"
+        )
+        
+        keyboard = [[InlineKeyboardButton("🏅 Mening nishonlarim", callback_data="badges_my")]]
+        
+        try:
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=text,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode='HTML'
+            )
+        except Exception as e2:
+            print(f"Error sending fallback notification: {e2}")
 
 # Export functions
 __all__ = [

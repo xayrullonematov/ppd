@@ -4,6 +4,7 @@ Leaderboard System - Weekly, Monthly, All-time rankings
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from utils.badge_images import generate_leaderboard_certificate
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
 import json
@@ -95,6 +96,84 @@ def update_leaderboard(user_id: int, username: str, questions_solved: int, corre
             )
     
     save_leaderboard_data(data)
+
+async def share_rank_certificate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Generate and send rank certificate"""
+    query = update.callback_query
+    await query.answer("Sertifikat tayyorlanmoqda...")
+    
+    user_id = update.effective_user.id
+    
+    # Get user rank and stats
+    rank, stats = get_user_rank(user_id, 'alltime')
+    
+    if rank == 0:
+        await query.message.reply_text(
+            "❌ Avval test topshiring!\n\n"
+            "Sertifikat olish uchun kamida bitta test tugatishingiz kerak."
+        )
+        return
+    
+    # Get username
+    try:
+        chat = await context.bot.get_chat(user_id)
+        if chat.username:
+            username = chat.username
+        elif chat.first_name:
+            username = chat.first_name
+        else:
+            username = f"User{user_id}"
+    except:
+        username = f"User{user_id}"
+    
+    # Generate certificate
+    try:
+        certificate = generate_leaderboard_certificate(
+            rank=rank,
+            username=username,
+            points=stats['points'],
+            correct=stats['correct_answers'],
+            total=stats['questions_solved'],
+            accuracy=stats['accuracy'],
+            tests_taken=stats['tests_taken']
+        )
+        
+        # Rank emoji
+        if rank == 1:
+            rank_emoji = "🥇"
+        elif rank == 2:
+            rank_emoji = "🥈"
+        elif rank == 3:
+            rank_emoji = "🥉"
+        else:
+            rank_emoji = f"#{rank}"
+        
+        caption = (
+            f"🏆 <b>REYTINGI SERTIFIKATI</b>\n\n"
+            f"{rank_emoji} <b>{rank}-o'rin</b>\n"
+            f"📊 {stats['points']} ball\n\n"
+            f"Do'stlaringiz bilan ulashing! 👆"
+        )
+        
+        await query.message.reply_photo(
+            photo=certificate,
+            caption=caption,
+            parse_mode='HTML'
+        )
+        
+    except Exception as e:
+        print(f"Error generating rank certificate: {e}")
+        await query.message.reply_text(
+            f"❌ Sertifikat yaratishda xatolik: {str(e)}"
+        )
+
+# Update show_my_rank function to add share button
+# Find the keyboard in show_my_rank and add this button:
+keyboard = [
+    [InlineKeyboardButton("📸 Sertifikat olish", callback_data="share_rank_cert")],
+    [InlineKeyboardButton("📊 Reytingni ko'rish", callback_data="leaderboard_alltime")],
+    [InlineKeyboardButton("◀️ Orqaga", callback_data="leaderboard_menu")]
+]
 
 def get_leaderboard(period: str = 'alltime', limit: int = 10) -> List[Dict]:
     """Get sorted leaderboard for a period"""

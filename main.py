@@ -17,6 +17,7 @@ import config
 from handlers.user import start, test_command, stats_command, review_command, help_command
 from handlers.admin import admin_command, handle_admin_message, broadcast_command
 from handlers.test import start_test, handle_answer, user_sessions
+from badge_certificates import send_badge_certificate
 from handlers.admin_tools import (
     admin_tools_command,
     list_questions,
@@ -44,7 +45,8 @@ from utils.keyboards import get_category_keyboard
 from handlers.leaderboard import (
     leaderboard_command,
     show_leaderboard,
-    show_my_rank
+    show_my_rank,
+    share_rank_certificate
 )
 from handlers.badges import (
     badges_command,
@@ -101,6 +103,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "leaderboard_alltime":
         await show_leaderboard(update, context, 'alltime')
         return
+
+    elif data == "share_rank_cert":
+        await share_rank_certificate(update, context)
+    	return
 
     elif data == "leaderboard_myrank":
         await show_my_rank(update, context)
