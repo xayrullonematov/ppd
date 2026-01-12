@@ -216,11 +216,12 @@ async def show_results(message, context: ContextTypes.DEFAULT_TYPE, user_id: int
         percentage = (correct / total) * 100
         
         # Record test completion
-        record_test_completion(
+        await record_test_completion(
             user_id=user_id,
             category=session['category'],
             score=correct,
-            total=total
+            total=total,
+            context=context
         )
         
         cat_info = next(

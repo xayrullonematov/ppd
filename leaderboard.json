@@ -1,0 +1,36 @@
+{
+  "weekly": {
+    "7038406097": {
+      "user_id": 7038406097,
+      "username": "@xayrullonematov",
+      "questions_solved": 1,
+      "correct_answers": 3,
+      "tests_taken": 1,
+      "accuracy": 300.0
+    }
+  },
+  "monthly": {
+    "7038406097": {
+      "user_id": 7038406097,
+      "username": "@xayrullonematov",
+      "questions_solved": 1,
+      "correct_answers": 3,
+      "tests_taken": 1,
+      "accuracy": 300.0
+    }
+  },
+  "alltime": {
+    "7038406097": {
+      "user_id": 7038406097,
+      "username": "@xayrullonematov",
+      "questions_solved": 1,
+      "correct_answers": 3,
+      "tests_taken": 1,
+      "accuracy": 300.0
+    }
+  },
+  "last_reset": {
+    "weekly": "2026-01-12T21:18:43.554831",
+    "monthly": "2026-01-12T21:18:43.554870"
+  }
+}

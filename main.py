@@ -17,7 +17,6 @@ import config
 from handlers.user import start, test_command, stats_command, review_command, help_command
 from handlers.admin import admin_command, handle_admin_message, broadcast_command
 from handlers.test import start_test, handle_answer, user_sessions
-from badge_certificates import send_badge_certificate
 from handlers.admin_tools import (
     admin_tools_command,
     list_questions,
@@ -106,7 +105,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "share_rank_cert":
         await share_rank_certificate(update, context)
-    	return
+        return
 
     elif data == "leaderboard_myrank":
         await show_my_rank(update, context)

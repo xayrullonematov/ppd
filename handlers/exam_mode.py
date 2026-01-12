@@ -341,11 +341,12 @@ async def finish_exam(message, context: ContextTypes.DEFAULT_TYPE, user_id: int,
         seconds_taken = int(time_taken.total_seconds() % 60)
         
         # Record completion
-        record_test_completion(
+        await record_test_completion(
             user_id=user_id,
             category='exam',
             score=correct,
-            total=total
+            total=total,
+            context=context
         )
         
         # Determine pass/fail (70% to pass)
