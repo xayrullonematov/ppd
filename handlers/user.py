@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import config
+import asyncio
 from database import get_total_count, get_category_stats, load_questions
 from utils.keyboards import get_category_keyboard
 from user_stats import get_user_stats, get_wrong_questions
@@ -195,7 +196,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start review mode with wrong answers"""
+    """Start review mode with wrong answers - FIXED VERSION"""
     user_id = update.effective_user.id
     wrong_ids = get_wrong_questions(user_id)
     
@@ -227,7 +228,6 @@ async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     # Get wrong questions
-    from database import load_questions
     all_questions = load_questions()
     wrong_questions = [q for q in all_questions if q['id'] in wrong_ids]
     
@@ -268,12 +268,42 @@ async def review_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Omad! 🍀"
     )
     
+    # Get the message object properly - FIXED!
     if update.callback_query:
-        await update.callback_query.message.reply_text(text, parse_mode='HTML')
-        await send_question(update, context, user_id)
+        # Delete old message
+        try:
+            await update.callback_query.message.delete()
+        except:
+            pass
+        
+        # Send info message
+        info_msg = await update.callback_query.message.chat.send_message(
+            text, 
+            parse_mode='HTML'
+        )
+        
+        # Delete info after 2 seconds
+        await asyncio.sleep(2)
+        try:
+            await info_msg.delete()
+        except:
+            pass
+        
+        # Send first question using the MESSAGE object (not Update!)
+        await send_question(update.callback_query.message, context, user_id)
     else:
-        await update.message.reply_text(text, parse_mode='HTML')
-        await send_question(update, context, user_id)
+        # Send info message
+        info_msg = await update.message.reply_text(text, parse_mode='HTML')
+        
+        # Delete info after 2 seconds
+        await asyncio.sleep(2)
+        try:
+            await info_msg.delete()
+        except:
+            pass
+        
+        # Send first question using the MESSAGE object (not Update!)
+        await send_question(update.message, context, user_id)
 
 async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show exam mode (redirects to exam_mode.py)"""

@@ -64,6 +64,8 @@ async def cleanup_old_message(chat_id: int, message_id: int):
 # Callback query router
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Route callback queries to appropriate handlers"""
+    from handlers.user import start  # Import here to avoid circular import
+    
     query = update.callback_query
     data = query.data
     user_id = update.effective_user.id
@@ -79,18 +81,21 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer()
         await query.message.delete()
         
-        # Call start command
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
+        # Send fresh start menu directly
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
         
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await start(fake_update, context)
         return
 
@@ -107,31 +112,36 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.delete()
         
         # Send fresh start menu
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
         
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await start(fake_update, context)
         return
     
     elif data == "menu_test":
         await query.answer()
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         keyboard = get_category_keyboard()
-        # Add back button
-        from telegram import InlineKeyboardButton
-        keyboard.inline_keyboard.append([
+        # Convert to list and add back button
+        keyboard_list = list(keyboard.inline_keyboard)
+        keyboard_list.append([
             InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")
         ])
+        new_keyboard = InlineKeyboardMarkup(keyboard_list)
         await query.edit_message_text(
             "📚 Qaysi bo'limdan test topshirmoqchisiz?",
-            reply_markup=keyboard
+            reply_markup=new_keyboard
         )
         return
     
@@ -154,17 +164,20 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer()
         await query.message.delete()
         
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
         
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await admin_command(fake_update, context)
         return
     
@@ -187,46 +200,54 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "back_to_categories":
         await query.answer()
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         keyboard = get_category_keyboard()
-        from telegram import InlineKeyboardButton
-        keyboard.inline_keyboard.append([
+        keyboard_list = list(keyboard.inline_keyboard)
+        keyboard_list.append([
             InlineKeyboardButton("◀️ Bosh menyu", callback_data="menu_back")
         ])
+        new_keyboard = InlineKeyboardMarkup(keyboard_list)
         await query.edit_message_text(
             "📚 Qaysi bo'limdan test topshirmoqchisiz?",
-            reply_markup=keyboard
+            reply_markup=new_keyboard
         )
 
     elif data == "home":
         await query.answer()
         await query.message.delete()
         
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
         
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await start(fake_update, context)
 
     # Admin tools callbacks
     elif data == "admin_tools":
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
         
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await admin_tools_command(fake_update, context)
 
     elif data == "admin_list":
@@ -279,17 +300,21 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "admin_back":
         await query.message.delete()
-        fake_message = type('obj', (object,), {
-            'reply_text': lambda *args, **kwargs: query.message.chat.send_message(*args, **kwargs),
-            'chat': query.message.chat,
-            'from_user': query.from_user
-        })()
         
-        fake_update = type('obj', (object,), {
-            'message': fake_message,
-            'effective_user': query.from_user
-        })()
+        class FakeUpdate:
+            def __init__(self, user, chat):
+                self.effective_user = user
+                self.message = FakeMessage(chat, user)
         
+        class FakeMessage:
+            def __init__(self, chat, user):
+                self.chat = chat
+                self.from_user = user
+                
+            async def reply_text(self, text, **kwargs):
+                return await self.chat.send_message(text=text, **kwargs)
+        
+        fake_update = FakeUpdate(query.from_user, query.message.chat)
         await admin_command(fake_update, context)
 
 async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):

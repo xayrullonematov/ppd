@@ -71,8 +71,16 @@ async def start_test(update: Update, context: ContextTypes.DEFAULT_TYPE, categor
 
 import asyncio
 
-async def send_question(message, context: ContextTypes.DEFAULT_TYPE, user_id: int):
+async def send_question(message_or_update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     """Send next question to user"""
+    
+    # Handle both message and Update objects
+    if hasattr(message_or_update, 'message'):
+        # It's an Update object
+        message = message_or_update.message
+    else:
+        # It's already a message object
+        message = message_or_update
     
     if user_id not in user_sessions:
         return

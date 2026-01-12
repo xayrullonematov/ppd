@@ -1,5 +1,5 @@
 """
-Timed Exam Mode - Real exam simulation with countdown timer
+Timed Exam Mode - Real exam simulation with countdown timer and MESSAGE CLEANUP
 """
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -31,6 +31,7 @@ class ExamSession:
         self.end_time = self.start_time + timedelta(seconds=EXAM_TIME_SECONDS)
         self.timer_task = None
         self.is_active = True
+        self.last_question_id = None  # For message cleanup
         
     def time_remaining(self) -> int:
         """Get seconds remaining"""
@@ -83,14 +84,15 @@ async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     text = (
-        "🎓 HAQIQIY IMTIHON SIMULYATSIYASI\n\n"
+        "🎓 <b>HAQIQIY IMTIHON SIMULYATSIYASI</b>\n\n"
         f"📋 Savollar: {EXAM_QUESTIONS} ta\n"
         f"⏰ Vaqt: {EXAM_TIME_MINUTES} daqiqa\n"
         f"⚡ Avtomatik topshirish: Ha\n\n"
-        "⚠️ Diqqat:\n"
+        "⚠️ <b>Diqqat:</b>\n"
         "• Vaqt tugashi bilan test avtomatik topshiriladi\n"
         "• Orqaga qaytib javobni o'zgartira olmaysiz\n"
-        "• Har bir savol faqat bir marta ko'rsatiladi\n\n"
+        "• Har bir savol faqat bir marta ko'rsatiladi\n"
+        "• Tushuntirish ko'rsatilmaydi (haqiqiy imtihon kabi)\n\n"
         "Tayyor bo'lsangiz boshlang!"
     )
     
@@ -98,9 +100,9 @@ async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Check if called from callback or command
     if update.callback_query:
-        await update.callback_query.edit_message_text(text, reply_markup=reply_markup)
+        await update.callback_query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
     else:
-        await update.message.reply_text(text, reply_markup=reply_markup)
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
 
 async def start_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Initialize and start exam"""
@@ -124,28 +126,43 @@ async def start_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         session = ExamSession(user_id, questions)
         exam_sessions[user_id] = session
         
+        # Delete the info message
+        try:
+            await query.message.delete()
+        except:
+            pass
+        
+        # Send start message
+        start_msg = await query.message.chat.send_message(
+            f"🎓 <b>Imtihon boshlandi!</b>\n\n"
+            f"⏰ Vaqt: {EXAM_TIME_MINUTES} daqiqa\n"
+            f"📊 Savollar: {EXAM_QUESTIONS} ta\n\n"
+            f"Omad! 🍀",
+            parse_mode='HTML'
+        )
+        
         # Start countdown timer
         session.timer_task = asyncio.create_task(
             countdown_timer(user_id, query.message, context)
         )
         
-        await query.edit_message_text(
-            f"🎓 Imtihon boshlandi!\n\n"
-            f"⏰ Vaqt: {EXAM_TIME_MINUTES} daqiqa\n"
-            f"📊 Savollar: {EXAM_QUESTIONS} ta\n\n"
-            f"Omad! 🍀"
-        )
+        # Delete start message after 2 seconds
+        await asyncio.sleep(2)
+        try:
+            await start_msg.delete()
+        except:
+            pass
         
         # Send first question
         await send_exam_question(query.message, context, user_id)
         
     except Exception as e:
-        await query.edit_message_text(f"❌ Xatolik: {str(e)}")
+        await query.message.chat.send_message(f"❌ Xatolik: {str(e)}")
         if user_id in exam_sessions:
             del exam_sessions[user_id]
 
 async def send_exam_question(message, context: ContextTypes.DEFAULT_TYPE, user_id: int):
-    """Send next exam question with timer"""
+    """Send next exam question with timer and MESSAGE CLEANUP"""
     if user_id not in exam_sessions:
         return
     
@@ -177,22 +194,31 @@ async def send_exam_question(message, context: ContextTypes.DEFAULT_TYPE, user_i
         # Send with image if available
         if question.get('file_id'):
             try:
-                await message.reply_photo(
+                sent_msg = await message.chat.send_photo(
                     photo=question['file_id'],
                     caption=question_text,
                     reply_markup=keyboard
                 )
             except:
-                await message.reply_text(question_text, reply_markup=keyboard)
+                sent_msg = await message.chat.send_message(
+                    question_text, 
+                    reply_markup=keyboard
+                )
         else:
-            await message.reply_text(question_text, reply_markup=keyboard)
+            sent_msg = await message.chat.send_message(
+                question_text, 
+                reply_markup=keyboard
+            )
+        
+        # Store message ID for cleanup
+        session.last_question_id = sent_msg.message_id
             
     except Exception as e:
         print(f"Error sending exam question: {e}")
-        await message.reply_text(f"❌ Xatolik: {str(e)}")
+        await message.chat.send_message(f"❌ Xatolik: {str(e)}")
 
 async def handle_exam_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answer_index: int):
-    """Handle answer during timed exam"""
+    """Handle answer during timed exam WITH MESSAGE CLEANUP"""
     query = update.callback_query
     await query.answer()
     
@@ -229,10 +255,16 @@ async def handle_exam_answer(update: Update, context: ContextTypes.DEFAULT_TYPE,
             category=question.get('category', 'mixed')
         )
         
-        # Move to next question (NO EXPLANATION in exam mode!)
+        # DELETE the question message (NO EXPLANATION shown!)
+        try:
+            await query.message.delete()
+        except:
+            pass
+        
+        # Move to next question
         session.current += 1
         
-        # Send next question immediately
+        # Send next question IMMEDIATELY (no delay, no explanation)
         await send_exam_question(query.message, context, user_id)
         
     except Exception as e:
@@ -257,18 +289,20 @@ async def countdown_timer(user_id: int, message, context: ContextTypes.DEFAULT_T
             # Send warning at 5 minutes
             remaining = session.time_remaining()
             if 290 <= remaining <= 300 and session.is_active:
-                await message.reply_text(
-                    "⚠️ OGOHLANTIRISH\n\n"
+                await message.chat.send_message(
+                    "⚠️ <b>OGOHLANTIRISH</b>\n\n"
                     "⏰ 5 daqiqa qoldi!\n"
-                    "Iltimos, tezroq javob bering."
+                    "Iltimos, tezroq javob bering.",
+                    parse_mode='HTML'
                 )
             
             # Send warning at 1 minute
             elif 50 <= remaining <= 60 and session.is_active:
-                await message.reply_text(
-                    "🚨 DIQQAT!\n\n"
+                await message.chat.send_message(
+                    "🚨 <b>DIQQAT!</b>\n\n"
                     "⏰ 1 daqiqa qoldi!\n"
-                    "Oxirgi imkoniyat!"
+                    "Oxirgi imkoniyat!",
+                    parse_mode='HTML'
                 )
         
         # Time's up!
@@ -319,9 +353,9 @@ async def finish_exam(message, context: ContextTypes.DEFAULT_TYPE, user_id: int,
         
         # Build result message
         result_text = (
-            f"{'🎉' if passed else '❌'} IMTIHON YAKUNLANDI!\n\n"
+            f"{'🎉' if passed else '❌'} <b>IMTIHON YAKUNLANDI!</b>\n\n"
             f"{'⏰ Vaqt tugadi - Avtomatik topshirildi' if auto_submit else '✅ Barcha savollar javoblandi'}\n\n"
-            f"📊 NATIJALAR:\n"
+            f"📊 <b>NATIJALAR:</b>\n"
             f"━━━━━━━━━━━━━━━\n"
             f"✅ To'g'ri: {correct}/{total}\n"
             f"❌ Noto'g'ri: {answered - correct}/{total}\n"
@@ -332,13 +366,13 @@ async def finish_exam(message, context: ContextTypes.DEFAULT_TYPE, user_id: int,
         
         if passed:
             result_text += (
-                "🎊 TABRIKLAYMIZ!\n"
+                "🎊 <b>TABRIKLAYMIZ!</b>\n"
                 "Siz imtihondan o'tdingiz! ✅\n\n"
                 "Haqiqiy imtihonga tayyor bo'lishingiz mumkin!"
             )
         else:
             result_text += (
-                "📚 O'tmadingiz\n"
+                "📚 <b>O'tmadingiz</b>\n"
                 "Minimal ball: 70%\n\n"
                 "Ko'proq mashq qiling va qaytadan urinib ko'ring!"
             )
@@ -349,13 +383,14 @@ async def finish_exam(message, context: ContextTypes.DEFAULT_TYPE, user_id: int,
             [InlineKeyboardButton("🏠 Bosh sahifa", callback_data="home")]
         ]
         
-        await message.reply_text(
+        await message.chat.send_message(
             result_text,
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode='HTML'
         )
         
     except Exception as e:
-        await message.reply_text(f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}")
+        await message.chat.send_message(f"❌ Natijalarni ko'rsatishda xatolik: {str(e)}")
     
     # Clean up session
     del exam_sessions[user_id]
