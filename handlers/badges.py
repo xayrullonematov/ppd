@@ -1,5 +1,5 @@
 """
-Badge System - Achievement badges for user accomplishments
+Badge System - Achievement badges with improved UI and Telegraph integration
 """
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -164,6 +164,9 @@ BADGE_DEFINITIONS = {
     }
 }
 
+# Telegraph page URL for all badges (you'll need to create this)
+TELEGRAPH_ALL_BADGES_URL = "https://telegra.ph/PDD-Test-Bot---Barcha-Yutuq-Nishonlari-01-15"
+
 def load_user_badges() -> Dict:
     """Load user badges"""
     try:
@@ -325,63 +328,34 @@ def get_badge_progress(user_stats: Dict) -> List[Dict]:
     return progress[:5]  # Return top 5 closest badges
 
 async def badges_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show user's badges"""
+    """Show badges main menu"""
     user_id = update.effective_user.id
     
-    # Get user stats from user_stats.py
-    from user_stats import get_user_stats
-    user_stats = get_user_stats(user_id)
-    user_stats['user_id'] = user_id
-    
-    # Get badges
+    # Get user badges
     badges = get_user_badges(user_id)
+    badge_count = len(badges)
+    total_badges = len(BADGE_DEFINITIONS)
     
-    text = "🏅 <b>Sizning nishonlaringiz</b>\n\n"
+    text = (
+        "🏅 <b>Yutuq Nishonlari</b>\n\n"
+        f"Sizda {badge_count}/{total_badges} ta nishon bor\n\n"
+    )
     
-    if badges:
-        text += f"Jami: {len(badges)} ta nishon\n\n"
+    if badge_count > 0:
+        # Show first 5 badges as preview
+        text += "<b>So'nggi nishonlaringiz:</b>\n"
+        for badge in badges[:5]:
+            text += f"{badge['emoji']} {badge['name']}\n"
         
-        # Group by rarity
-        legendary = [b for b in badges if b['id'] in ['legend', 'perfectionist', 'diamond_solver']]
-        rare = [b for b in badges if b['id'] in ['gold_solver', 'gold_tester', 'sniper', 'exam_ace', 'month_master']]
-        common = [b for b in badges if b not in legendary and b not in rare]
-        
-        if legendary:
-            text += "<b>👑 AFSONAVIY:</b>\n"
-            for badge in legendary:
-                text += f"{badge['emoji']} {badge['name']}\n"
-            text += "\n"
-        
-        if rare:
-            text += "<b>⭐ KAMYOB:</b>\n"
-            for badge in rare:
-                text += f"{badge['emoji']} {badge['name']}\n"
-            text += "\n"
-        
-        if common:
-            text += "<b>🎖️ ODDIY:</b>\n"
-            for badge in common:
-                text += f"{badge['emoji']} {badge['name']}\n"
-            text += "\n"
+        if badge_count > 5:
+            text += f"\n... va yana {badge_count - 5} ta nishon\n"
     else:
-        text += "Hali nishonlaringiz yo'q.\n\n"
-        text += "Test topshiring va nishonlar yutib oling! 🎯\n\n"
+        text += "Hali nishonlaringiz yo'q.\nTest topshiring va yutuqlar qo'lga kiriting! 🎯"
     
-    # Show progress to next badges
-    progress = get_badge_progress(user_stats)
-    if progress:
-        text += "━━━━━━━━━━━━━━━\n\n"
-        text += "<b>📊 Keyingi nishonlar:</b>\n\n"
-        for item in progress[:3]:
-            badge = item['badge']
-            text += (
-                f"{badge['emoji']} <b>{badge['name']}</b>\n"
-                f"   {item['current']}/{item['target']} ({item['percentage']}%)\n"
-                f"   {badge['description']}\n\n"
-            )
-    
+    # Create keyboard
     keyboard = [
-        [InlineKeyboardButton("📜 Barcha nishonlar", callback_data="badges_all")],
+        [InlineKeyboardButton("🎖️ Mening nishonlarim", callback_data="badges_my")],
+        [InlineKeyboardButton("📜 Barcha nishonlar", url=TELEGRAPH_ALL_BADGES_URL)],
         [InlineKeyboardButton("◀️ Orqaga", callback_data="menu_back")]
     ]
     
@@ -400,44 +374,83 @@ async def badges_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-async def show_all_badges(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show all available badges"""
+async def show_my_badges(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show user's earned badges with shareable certificates"""
     query = update.callback_query
     await query.answer()
     
     user_id = update.effective_user.id
-    earned_badges = get_user_badges(user_id)
-    earned_ids = [b['id'] for b in earned_badges]
     
-    text = "📜 <b>Barcha nishonlar</b>\n\n"
+    # Get user stats
+    from user_stats import get_user_stats
+    user_stats = get_user_stats(user_id)
+    user_stats['user_id'] = user_id
     
-    # Group badges by category
-    categories = {
-        'Boshlang\'ich': ['first_test', 'first_perfect'],
-        'Savollar': ['bronze_solver', 'silver_solver', 'gold_solver', 'diamond_solver'],
-        'Testlar': ['bronze_tester', 'silver_tester', 'gold_tester'],
-        'Aniqlik': ['accurate', 'sharpshooter', 'sniper'],
-        'Imtihon': ['exam_passer', 'exam_ace'],
-        'Maxsus': ['speed_demon', 'night_owl', 'early_bird', 'comeback', 'week_warrior', 'month_master'],
-        'Afsonaviy': ['legend', 'perfectionist']
-    }
+    # Get badges
+    badges = get_user_badges(user_id)
     
-    for category, badge_ids in categories.items():
-        text += f"<b>{category}:</b>\n"
-        for badge_id in badge_ids:
-            if badge_id in BADGE_DEFINITIONS:
-                badge = BADGE_DEFINITIONS[badge_id]
-                status = "✅" if badge_id in earned_ids else "🔒"
-                text += f"{status} {badge['emoji']} {badge['name']}\n"
-                text += f"    {badge['description']}\n"
+    if not badges:
+        text = (
+            "🏅 <b>Mening nishonlarim</b>\n\n"
+            "Sizda hali nishonlar yo'q.\n\n"
+            "Test topshiring va nishonlar yutib oling! 🎯"
+        )
+        
+        keyboard = [
+            [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
+            [InlineKeyboardButton("◀️ Orqaga", callback_data="menu_badges")]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+        return
+    
+    # Sort badges by date (newest first)
+    badges.sort(key=lambda x: x['earned_date'], reverse=True)
+    
+    text = (
+        f"🏅 <b>Mening nishonlarim ({len(badges)})</b>\n\n"
+        "<b>Sizning yutuqlaringiz:</b>\n\n"
+    )
+    
+    # Group badges by rarity
+    legendary = [b for b in badges if b['id'] in ['legend', 'perfectionist', 'diamond_solver']]
+    rare = [b for b in badges if b['id'] in ['gold_solver', 'gold_tester', 'sniper', 'exam_ace', 'month_master']]
+    common = [b for b in badges if b not in legendary and b not in rare]
+    
+    if legendary:
+        text += "<b>👑 AFSONAVIY:</b>\n"
+        for badge in legendary:
+            date = badge['earned_date'][:10] if len(badge['earned_date']) > 10 else badge['earned_date']
+            text += f"{badge['emoji']} {badge['name']} - {date}\n"
         text += "\n"
     
-    text += f"Jami nishonlar: {len(BADGE_DEFINITIONS)}\n"
-    text += f"Siz yutgansiz: {len(earned_badges)}/{len(BADGE_DEFINITIONS)}"
+    if rare:
+        text += "<b>⭐ KAMYOB:</b>\n"
+        for badge in rare:
+            date = badge['earned_date'][:10] if len(badge['earned_date']) > 10 else badge['earned_date']
+            text += f"{badge['emoji']} {badge['name']} - {date}\n"
+        text += "\n"
     
+    if common:
+        text += "<b>🎖️ ODDIY:</b>\n"
+        for badge in common[:10]:  # Show max 10 common badges
+            date = badge['earned_date'][:10] if len(badge['earned_date']) > 10 else badge['earned_date']
+            text += f"{badge['emoji']} {badge['name']} - {date}\n"
+        
+        if len(common) > 10:
+            text += f"\n... va yana {len(common) - 10} ta nishon\n"
+    
+    text += "\n💡 Har bir nishon uchun sertifikat olishingiz mumkin!"
+    
+    # Keyboard with share option
     keyboard = [
-        [InlineKeyboardButton("🏅 Mening nishonlarim", callback_data="badges_my")],
-        [InlineKeyboardButton("◀️ Orqaga", callback_data="menu_back")]
+        [InlineKeyboardButton("📜 Barcha nishonlar", url=TELEGRAPH_ALL_BADGES_URL)],
+        [InlineKeyboardButton("◀️ Orqaga", callback_data="menu_badges")]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -447,6 +460,13 @@ async def show_all_badges(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
         parse_mode='HTML'
     )
+
+async def show_all_badges(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Redirect to Telegraph page"""
+    query = update.callback_query
+    await query.answer("Telegraph sahifasi ochilmoqda...")
+    
+    # This will be handled by the URL button in the keyboard
 
 async def notify_new_badge(context: ContextTypes.DEFAULT_TYPE, user_id: int, badge_id: str):
     """Send notification with certificate image when user earns a new badge"""
@@ -521,6 +541,7 @@ async def notify_new_badge(context: ContextTypes.DEFAULT_TYPE, user_id: int, bad
 # Export functions
 __all__ = [
     'badges_command',
+    'show_my_badges',
     'show_all_badges',
     'check_and_award_badges',
     'get_user_badges',

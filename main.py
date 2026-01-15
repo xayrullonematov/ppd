@@ -49,9 +49,9 @@ from handlers.leaderboard import (
 )
 from handlers.badges import (
     badges_command,
-    show_all_badges
+    show_all_badges,
+    show_my_badges
 )
-
 # Setup logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -111,10 +111,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_my_rank(update, context)
         return
 
-     # Badge callbacks
-    elif data == "menu_badges" or data == "badges_my":
+    elif data == "menu_badges":
         await badges_command(update, context)
         return
+
+    elif data == "badges_my":
+
+        await show_my_badges(update, context)
+        return
+
+     # Badge callbacks
+
 
     elif data == "badges_all":
         await show_all_badges(update, context)

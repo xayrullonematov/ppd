@@ -7,7 +7,7 @@ from utils.keyboards import get_category_keyboard
 from user_stats import get_user_stats, get_wrong_questions
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /start command with main menu"""
+    """Handle /start command with minimalist main menu"""
     user_id = update.effective_user.id
     is_admin = (user_id == config.ADMIN_ID)
     
@@ -16,83 +16,74 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_stats = get_user_stats(user_id)
     wrong_count = len(get_wrong_questions(user_id))
     
-    # Get badges (first 3)
-    badge_display = ""
+    # Get badges count
+    badge_count = 0
     try:
         from handlers.badges import get_user_badges
         badges = get_user_badges(user_id)
-        if badges:
-            badge_display = " ".join([b['emoji'] for b in badges[:3]])
-            if len(badges) > 3:
-                badge_display += f" +{len(badges)-3}"
-            badge_display = f"\n🏅 {badge_display}"
+        badge_count = len(badges)
     except:
         pass
     
     # Get rank
-    rank_display = ""
+    rank = 0
     try:
         from handlers.leaderboard import get_user_rank
         rank, _ = get_user_rank(user_id, 'alltime')
-        if rank > 0 and rank <= 10:
-            rank_display = f"\n🏆 Reyting: #{rank}"
     except:
         pass
     
-    # Main welcome text
+    # Minimalist welcome text
     text = (
-        "🚗 <b>PDD Test Bot</b>\n\n"
-        "Haydovchilik guvohnomasini olish uchun\n"
-        "eng yaxshi tayyorgarlik dasturi!\n\n"
-        f"📊 <b>{total} ta savol</b> bazada"
-        f"{badge_display}"
-        f"{rank_display}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-        "<b>🎯 ASOSIY FUNKSIYALAR</b>\n\n"
-        "📝 <b>Test topshirish</b>\n"
-        "   Kategoriya tanlang va mashq qiling\n\n"
-        "🔥 <b>Imtihon rejimi</b>\n"
-        "   Haqiqiy imtihon kabi vaqt bilan\n\n"
-        "🏆 <b>Reytingi</b>\n"
-        "   Eng yaxshi o'quvchilar ro'yxati\n\n"
-        "🏅 <b>Nishonlar</b>\n"
-        "   O'z yutuqlaringizni ko'ring\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-        "👇 Quyidagi tugmalardan birini tanlang"
+        "🚗 <b>PDD Test Bot</b>\n"
+        "Haydovchilik imtihoniga professional tayyorgarlik\n\n"
+        f"📊 <b>{total}</b> ta savol bazada"
     )
     
-    # Build keyboard
+    # Add user achievements if exists
+    if user_stats['tests_taken'] > 0:
+        text += f"\n🎯 {user_stats['accuracy']}% aniqlik"
+    
+    if badge_count > 0:
+        text += f" | 🏅 {badge_count} nishon"
+    
+    if rank > 0 and rank <= 10:
+        text += f" | 🏆 #{rank}"
+    
+    # Build minimalist keyboard
     keyboard = [
-        [InlineKeyboardButton("📝 Test boshlash", callback_data="menu_test")],
-        [InlineKeyboardButton("🔥 Imtihon rejimi", callback_data="menu_exam")],
+        [
+            InlineKeyboardButton("📝 Test ishlash", callback_data="menu_test"),
+            InlineKeyboardButton("🔥 Imtihon rejimi", callback_data="menu_exam")
+        ]
     ]
     
-    # Only show review if user has wrong answers
+    # Second row - conditional buttons
+    second_row = []
     if wrong_count > 0:
-        keyboard.append([InlineKeyboardButton(
-            f"🔄 Xato javoblar ({wrong_count})", 
-            callback_data="menu_review"
-        )])
+        second_row.append(InlineKeyboardButton(f"🔄 Xato javoblar ({wrong_count})", callback_data="menu_review"))
     
-    # Leaderboard and badges
+    if second_row:
+        keyboard.append(second_row)
+    
+    # Third row - Rankings and Badges
     keyboard.append([
-        InlineKeyboardButton("🏆 Reytingi", callback_data="menu_leaderboard"),
+        InlineKeyboardButton("🏆 Reyting", callback_data="menu_leaderboard"),
         InlineKeyboardButton("🏅 Nishonlar", callback_data="menu_badges")
     ])
     
-    # Only show stats if user has taken tests
+    # Fourth row - Stats (only if user has activity)
     if user_stats['tests_taken'] > 0:
-        keyboard.append([InlineKeyboardButton(
-            "📊 Statistika", 
-            callback_data="menu_stats"
-        )])
+        keyboard.append([InlineKeyboardButton("📊 Statistika", callback_data="menu_stats")])
     
-    # Admin button
+    # Admin and help buttons
+    bottom_row = []
     if is_admin:
-        keyboard.append([InlineKeyboardButton("🔐 Admin", callback_data="menu_admin")])
+        bottom_row.append(InlineKeyboardButton("🔐 Admin", callback_data="menu_admin"))
+    bottom_row.append(InlineKeyboardButton("ℹ️ Yordam", callback_data="menu_help"))
     
-    # Add help button
-    keyboard.append([InlineKeyboardButton("ℹ️ Yordam", callback_data="menu_help")])
+    if bottom_row:
+        keyboard.append(bottom_row)
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     

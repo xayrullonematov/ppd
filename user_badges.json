@@ -12,5 +12,29 @@
       "bronze_solver": "2026-01-12T21:18:43.556628",
       "legend": "2026-01-12T21:18:43.557789"
     }
+  },
+  "765187601": {
+    "earned_badges": [
+      "first_test",
+      "first_perfect",
+      "legend"
+    ],
+    "badge_dates": {
+      "first_test": "2026-01-14T17:55:48.894437",
+      "first_perfect": "2026-01-14T17:55:48.894534",
+      "legend": "2026-01-14T17:55:48.895676"
+    }
+  },
+  "6650028791": {
+    "earned_badges": [
+      "first_test",
+      "first_perfect",
+      "legend"
+    ],
+    "badge_dates": {
+      "first_test": "2026-01-14T17:58:10.338703",
+      "first_perfect": "2026-01-14T17:58:10.338871",
+      "legend": "2026-01-14T17:58:10.340672"
+    }
   }
 }

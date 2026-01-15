@@ -268,5 +268,145 @@
     "correct_index": 2,
     "category": "rules",
     "id": 20
+  },
+  {
+    "question": "Bu belgi nimani bildiradi?",
+    "options": [
+      "Oddiy yuk",
+      "Xavfli yuk",
+      "Tez buziladigan mahsulot",
+      "Maxsus transport"
+    ],
+    "explanation": "Tushuntirish: Belgida “XAVFLI YUK” yozuvi va sinf raqamlari bor, bu yuk xavfli moddalarni anglatadi.",
+    "file_id": "AgACAgIAAxkBAAIDPmlo-SHXPex390W3t0u1wweGYr9-AAI8Emsb4INIS_wSVXtDdgf5AQADAgADbQADOAQ",
+    "correct_index": 1,
+    "category": "signs",
+    "id": 21
+  },
+  {
+    "question": "Bu belgi odatda qayerda qo‘yiladi?",
+    "options": [
+      "Avtobus bekatida",
+      "Avtoturargohda",
+      "Tibbiy markazda",
+      "Yo‘l chetida"
+    ],
+    "explanation": "Tushuntirish: Tow truck belgisi — mashinalar noqonuniy qo‘yilsa, evakuator olib ketishini bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDQmlo-VVTogNdeXzRMYDxm3M61w2TAAI9Emsb4INISw2twzD-cnV2AQADAgADbQADOAQ",
+    "correct_index": 3,
+    "category": "signs",
+    "id": 22
+  },
+  {
+    "question": "“+METPO” logotipi nimani anglatishi mumkin?",
+    "options": [
+      "Tibbiy xizmat",
+      "Texnologik brend",
+      "Transport belgisi",
+      "Sport klubi"
+    ],
+    "explanation": "Tushuntirish: Plus belgisi ko‘pincha sog‘liq yoki qo‘shimcha xizmatlarni anglatadi, “METPO” esa brend nomi.",
+    "file_id": "AgACAgIAAxkBAAIDRmlo-YA6CfNpg6RKeJBNho3kB3mhAAI-Emsb4INIS28MDEZoxIjUAQADAgADbQADOAQ",
+    "correct_index": 0,
+    "category": "signs",
+    "id": 23
+  },
+  {
+    "question": "Bu belgilar nimani ko‘rsatadi?",
+    "options": [
+      "Yo‘lning tugashi",
+      "To‘siqni qaysi tomondan chetlash kerakligini",
+      "Avtobus bekatini",
+      "Yo‘lning kengayishini"
+    ],
+    "explanation": "Tushuntirish: Qizil chiziqli belgilar — to‘siqni chap yoki o‘ngdan chetlashni bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDSmlo-Z6eUEnFGAABfekD39OXN__Z8gACPxJrG-CDSEsL0rc1u_8QYAEAAwIAA3kAAzgE",
+    "correct_index": 1,
+    "category": "signs",
+    "id": 24
+  },
+  {
+    "question": "Bu belgi odatda qayerda qo‘yiladi?",
+    "options": [
+      "Optika do‘konida",
+      "Avtobus bekatida",
+      "Restoranda",
+      "Yo‘l chetida"
+    ],
+    "explanation": "Tushuntirish: Ko‘zoynak belgisi — ko‘rish xizmatlari yoki optika markazini bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDTmlo-g4xOFB8yf-pl2ZrHqy3dtp8AAJAEmsb4INIS6LifwlA-vuJAQADAgADeAADOAQ",
+    "correct_index": 0,
+    "category": "signs",
+    "id": 25
+  },
+  {
+    "question": "Bu belgi nimani bildiradi?",
+    "options": [
+      "Tramvay bekati",
+      "Avtobus bekati",
+      "Taksi joyi",
+      "Metro kirish joyi"
+    ],
+    "explanation": "Tushuntirish: Pantografli transport tasviri tramvayni bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDVGlo-iEFJ2OATUvFMhBq3JYWT74tAAJBEmsb4INISzv2vUHjBjlAAQADAgADbQADOAQ",
+    "correct_index": 0,
+    "category": "signs",
+    "id": 26
+  },
+  {
+    "question": "Bu belgi nimani bildiradi?",
+    "options": [
+      "To‘siqni faqat chapdan o‘tish",
+      "To‘siqni faqat o‘ngdan o‘tish",
+      "To‘siqni har ikki tomondan o‘tish mumkin",
+      "Yo‘l tugaydi"
+    ],
+    "explanation": "Tushuntirish: Pastga yo‘nalgan kengaygan o‘q — to‘siqni har ikki tomondan chetlash mumkinligini bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDWGlo-j-5hKmbGQobuakI65Si0osOAAJCEmsb4INISwJCY7XMLn3RAQADAgADeAADOAQ",
+    "correct_index": 2,
+    "category": "signs",
+    "id": 27
+  },
+  {
+    "question": "Bu belgi qanday transportni bildiradi?",
+    "options": [
+      "Oddiy avtobus",
+      "Tramvay",
+      "Tibbiy transport avtobusi",
+      "Taksi"
+    ],
+    "explanation": "Tushuntirish: Belgida tibbiy krest va avtobus tasviri bor, bu tibbiy transportni anglatadi.",
+    "file_id": "AgACAgIAAxkBAAIDXGlo-lKhI1ZMJ6O3Zc0ucvJ_RX-nAAJDEmsb4INISxPN7USjU6WpAQADAgADbQADOAQ",
+    "correct_index": 2,
+    "category": "signs",
+    "id": 28
+  },
+  {
+    "question": "Bu belgi nimani ko‘rsatadi?",
+    "options": [
+      "Yo‘lning tugashi",
+      "T-shaklidagi chorraha",
+      "Avtobus bekati",
+      "Yo‘lning kengayishi"
+    ],
+    "explanation": "Tushuntirish: Belgida asosiy yo‘l va unga qo‘shilgan yon yo‘llar ko‘rsatilgan.",
+    "file_id": "AgACAgIAAxkBAAIDYGlo-muWbtL7bxC9kweutZNsmWMwAAJEEmsb4INISwxgCZX6HOYBAQADAgADeAADOAQ",
+    "correct_index": 1,
+    "category": "signs",
+    "id": 29
+  },
+  {
+    "question": "Bu belgi nimani bildiradi?",
+    "options": [
+      "Quyoshli ob-havo",
+      "Yomg‘irli ob-havo",
+      "Shamolli ob-havo",
+      "Qor yog‘ishi"
+    ],
+    "explanation": "Tushuntirish: Bulut ostidagi chiziqlar yomg‘irni bildiradi.",
+    "file_id": "AgACAgIAAxkBAAIDZmlo-1BktrBBkAu8d9S2kge-mCYVAAJFEmsb4INIS6l5-S9Ega5fAQADAgADeAADOAQ",
+    "correct_index": 1,
+    "category": "signs",
+    "id": 30
   }
 ]

@@ -1,5 +1,5 @@
 """
-Test session management WITH AUTO MESSAGE CLEANUP
+Test session management WITH AUTO MESSAGE CLEANUP and LONGER EXPLANATION DELAY
 """
 
 from telegram import Update
@@ -135,7 +135,7 @@ async def send_question(message_or_update, context: ContextTypes.DEFAULT_TYPE, u
         await message.chat.send_message(f"❌ Savol yuborishda xatolik: {str(e)}")
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answer_index: int):
-    """Handle user's answer WITH MESSAGE CLEANUP"""
+    """Handle user's answer WITH MESSAGE CLEANUP and LONGER EXPLANATION DELAY"""
     query = update.callback_query
     await query.answer()
     
@@ -190,8 +190,10 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, answ
         # Move to next question
         session['current'] += 1
         
-        # Wait 3 seconds then delete result and send next question
-        await asyncio.sleep(3)
+        # LONGER WAIT TIME: 5-6 seconds (random between 5 and 6)
+        import random
+        wait_time = random.uniform(5.0, 6.0)
+        await asyncio.sleep(wait_time)
         
         try:
             await result_msg.delete()
