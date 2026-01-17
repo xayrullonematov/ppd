@@ -8,6 +8,7 @@ import asyncio
 from datetime import datetime, timedelta
 from database import get_random_questions
 from user_stats import record_answer, record_test_completion
+from utils.premium import SubscriptionManager
 from utils.keyboards import get_answer_keyboard
 import config
 
@@ -56,6 +57,17 @@ class ExamSession:
         self.answers[question_id] = (answer_index, is_correct)
         if is_correct:
             self.correct += 1
+
+
+async def start_exam(update, context):
+    user_id = update.effective_user.id
+    
+    # Check daily limit
+    limit_check = await SubscriptionManager.check_daily_limit(user_id)
+    if not limit_check['allowed']:
+        # Show upgrade prompt
+        # (see example in exam_premium_integration.py)
+        return
 
 async def exam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start timed exam mode"""

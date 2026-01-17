@@ -16,6 +16,7 @@ from telegram.ext import (
 import config
 from handlers.user import start, test_command, stats_command, review_command, help_command
 from handlers.admin import admin_command, handle_admin_message, broadcast_command
+from handlers.premium import register_premium_handlers
 from handlers.test import start_test, handle_answer, user_sessions
 from handlers.admin_tools import (
     admin_tools_command,
@@ -62,6 +63,10 @@ logger = logging.getLogger(__name__)
 
 # Track last message IDs for cleanup
 user_last_messages = {}
+
+def main():
+    application = ApplicationBuilder().token(TOKEN).build()
+    
 
 async def cleanup_old_message(chat_id: int, message_id: int):
     """Delete old message if it exists"""
@@ -434,6 +439,10 @@ def main():
         filters.TEXT & ~filters.COMMAND,
         handle_text_messages
     ))
+
+    register_premium_handlers(application)
+    
+    application.run_polling()
 
     # Start polling
     logger.info("✅ Bot ishga tushdi!")
